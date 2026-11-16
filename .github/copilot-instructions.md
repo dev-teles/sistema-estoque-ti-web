@@ -1,0 +1,1 @@
+Sempre gere mensagens de commit em português brasileiro (pt-BR) utilizando o padrão Conventional Commits (tipo(escopo): descrição)
