@@ -50,7 +50,7 @@ export function InicioView({ onNavigate }: { onNavigate: (aba: Aba) => void }) {
     <div className="space-y-6">
       {/* Resumo em 3 Cartões Fáceis */}
       <div>
-        <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-3">
+        <h2 className="text-4xl font-bold text-slate-800 dark:text-slate-100 mb-12">
           Como está o estoque hoje?
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -65,9 +65,6 @@ export function InicioView({ onNavigate }: { onNavigate: (aba: Aba) => void }) {
             <p className="text-3xl font-bold mt-2 text-green-600 dark:text-green-400">
               {kpis.itens_regulares} itens
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Com quantidade suficiente na prateleira
-            </p>
           </button>
 
           <button
@@ -75,13 +72,10 @@ export function InicioView({ onNavigate }: { onNavigate: (aba: Aba) => void }) {
             onClick={() => onNavigate('estoque')}
             className="text-left bg-white dark:bg-slate-800 p-5 rounded-2xl border-2 border-amber-200 dark:border-amber-900/60 hover:border-amber-400 transition-colors cursor-pointer shadow-xs"
           >
-            <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400">
-              Atenção: Acabando
+            <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white text-amber-700 dark:bg-amber-950 dark:text-amber-400">
+              Poucos itens restantes
             </span>
             <p className="text-3xl font-bold mt-2 text-amber-500">{kpis.itens_alerta} itens</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Atingiram o estoque mínimo e precisam de compra
-            </p>
           </button>
 
           <button
@@ -90,12 +84,9 @@ export function InicioView({ onNavigate }: { onNavigate: (aba: Aba) => void }) {
             className="text-left bg-white dark:bg-slate-800 p-5 rounded-2xl border-2 border-red-200 dark:border-red-900/60 hover:border-red-400 transition-colors cursor-pointer shadow-xs"
           >
             <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400">
-              Urgente: Em Falta
+              Em Falta
             </span>
             <p className="text-3xl font-bold mt-2 text-red-500">{kpis.itens_criticos} itens</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Sem nenhuma unidade disponível para uso
-            </p>
           </button>
         </div>
       </div>
@@ -107,12 +98,9 @@ export function InicioView({ onNavigate }: { onNavigate: (aba: Aba) => void }) {
           <div>
             <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-slate-800 dark:text-slate-100">
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
                   Aguardando Retirada ({kpis.reservas_pendentes})
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Materiais reservados que o solicitante ainda não buscou
-                </p>
               </div>
               <button
                 type="button"
@@ -143,7 +131,7 @@ export function InicioView({ onNavigate }: { onNavigate: (aba: Aba) => void }) {
                       type="button"
                       onClick={() => confirmarEntrega.mutate(r.id)}
                       disabled={confirmarEntrega.isPending}
-                      className="px-3 py-1.5 rounded-lg bg-green-500 hover:bg-green-600 text-white text-xs font-semibold cursor-pointer shrink-0"
+                      className="px-3 py-1.5 rounded-lg bg-gray-200 hover:bg-green-600 text-black text-xs font-semibold cursor-pointer shrink-0"
                     >
                       Confirmar Entrega
                     </button>

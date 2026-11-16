@@ -11,13 +11,11 @@ import type { Aba } from './types/navigation';
 
 export default function App() {
   const { user, loading, login, logout } = useAuth();
-  const [dark, setDark] = useState(() => localStorage.getItem('tema_ti') === 'dark');
   const [aba, setAba] = useState<Aba>('inicio');
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', dark);
-    localStorage.setItem('tema_ti', dark ? 'dark' : 'light');
-  }, [dark]);
+    document.documentElement.classList.add('dark');
+  }, []);
 
   if (loading) {
     return (
@@ -28,7 +26,7 @@ export default function App() {
   }
 
   if (!user) {
-    return <LoginScreen onLogin={login} dark={dark} onToggleDark={() => setDark(!dark)} />;
+    return <LoginScreen onLogin={login} />;
   }
 
   const podeGerir = user.role === 'admin' || user.role === 'gestor';
@@ -40,8 +38,6 @@ export default function App() {
         user={user}
         aba={aba}
         onSelectAba={setAba}
-        dark={dark}
-        onToggleDark={() => setDark(!dark)}
         onLogout={logout}
       />
 

@@ -2,11 +2,9 @@ import { useState } from 'react';
 
 interface LoginScreenProps {
   onLogin: (email: string, password: string) => Promise<void>;
-  dark: boolean;
-  onToggleDark: () => void;
 }
 
-export function LoginScreen({ onLogin, dark, onToggleDark }: LoginScreenProps) {
+export function LoginScreen({ onLogin }: LoginScreenProps) {
   const [email, setEmail] = useState('admin@estoque.local');
   const [password, setPassword] = useState('password');
   const [erro, setErro] = useState('');
@@ -38,13 +36,6 @@ export function LoginScreen({ onLogin, dark, onToggleDark }: LoginScreenProps) {
               <p className="text-xs text-slate-500 dark:text-slate-400">Entre para gerenciar os materiais</p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onToggleDark}
-            className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer"
-          >
-            {dark ? '☀️' : '🌙'}
-          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

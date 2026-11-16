@@ -63,10 +63,7 @@ export function ReservasView() {
         className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-sky-100 dark:border-slate-700 space-y-4 h-fit shadow-xs"
       >
         <div>
-          <h2 className="text-base font-bold">Separar Material para Retirada</h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Reserve um item para quando o colaborador vier buscar no suporte.
-          </p>
+          <h2 className="text-base font-bold">Separar material para retirada</h2>
         </div>
 
         <div>

@@ -30,15 +30,15 @@ export const TIPO_LABEL: Record<string, { texto: string; cor: string }> = {
 export function StatusBadge({ status }: { status: UnidadeEstoque['status_reposicao'] }) {
   const map = {
     regular: {
-      label: 'Estoque OK',
+      label: 'Tudo certo',
       cls: 'bg-green-100 text-green-700 dark:bg-green-950/70 dark:text-green-400',
     },
     alerta: {
-      label: 'Acabando (Repor)',
+      label: 'Poucos itens',
       cls: 'bg-amber-100 text-amber-700 dark:bg-amber-950/70 dark:text-amber-400',
     },
     critico: {
-      label: 'Em Falta (Zerado)',
+      label: 'Em Falta',
       cls: 'bg-red-100 text-red-700 dark:bg-red-950/70 dark:text-red-400',
     },
   }[status];

@@ -106,13 +106,9 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
       {/* Cabeçalho Explicativo */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">
-            Lista de Materiais da TI
+          <h2 className="text-4xl font-bold text-slate-800 dark:text-slate-100">
+            Lista de Materiais
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Use os botões <strong>+ Entrada</strong> quando chegar material novo ou{' '}
-            <strong>- Saída</strong> quando entregar um item.
-          </p>
         </div>
 
         {podeGerir && (
@@ -131,7 +127,7 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
         <input
           type="search"
           aria-label="Buscar equipamento pelo nome"
-          placeholder="🔍 Digite o nome do item (ex: Mouse, Cabo Cat6, SSD)..."
+          placeholder="Digite o nome do item"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="flex-1 min-w-[240px] rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3.5 py-2 text-sm"
@@ -158,9 +154,9 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
           className="rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
         >
           <option value="">Qualquer situação</option>
-          <option value="regular">Estoque OK</option>
-          <option value="alerta">Acabando (Repor)</option>
-          <option value="critico">Em Falta (Zerado)</option>
+          <option value="regular">Tudo certo</option>
+          <option value="alerta">Poucos itens</option>
+          <option value="critico">Em Falta</option>
         </select>
       </div>
 
