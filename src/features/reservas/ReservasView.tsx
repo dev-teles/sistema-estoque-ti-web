@@ -101,14 +101,14 @@ export function ReservasView() {
   });
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6">
       {/* Formulário com Integração Auvo */}
       <form
         onSubmit={(e) => criarReserva.mutate(e)}
-        className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-sky-100 dark:border-slate-700 space-y-4 h-fit shadow-xs"
+        className="bg-white dark:bg-slate-800 p-5 border border-sky-100 dark:border-slate-700 space-y-4 h-fit shadow-xs"
       >
         <div>
-          <h2 className="text-base font-bold">Separar material para retirada</h2>
+          <h2 className="text-2xl font-bold whitespace-nowrap">Separar material para retirada</h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Importe direto pelo nº da tarefa do Auvo ou preencha manualmente.
           </p>
@@ -161,7 +161,7 @@ export function ReservasView() {
           <input
             type="text"
             required
-            placeholder="Ex: João Silva (Tarefa Auvo #45890)"
+            placeholder="Nome do solicitante"
             value={solicitante}
             onChange={(e) => setSolicitante(e.target.value)}
             className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
@@ -181,10 +181,10 @@ export function ReservasView() {
         </div>
 
         <div>
-          <label className="block text-xs font-semibold mb-1">Descrição / Orientação da Tarefa</label>
+          <label className="block text-xs font-semibold mb-1">Descrição da Tarefa</label>
           <input
             type="text"
-            placeholder="Preenchido pelo Auvo ou digite uma observação"
+            placeholder="Digite uma observação"
             value={observacao}
             onChange={(e) => setObservacao(e.target.value)}
             className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
@@ -197,14 +197,14 @@ export function ReservasView() {
           type="submit"
           className="w-full py-2.5 rounded-xl bg-sky-400 hover:bg-sky-500 text-slate-950 font-bold text-sm cursor-pointer"
         >
-          Deixar Separado
+          Deixar separado
         </button>
       </form>
 
       {/* Fila de Retirada */}
-      <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl border border-sky-100 dark:border-slate-700 overflow-hidden shadow-xs">
+      <div className="bg-white dark:bg-slate-800 border border-sky-100 dark:border-slate-700 overflow-hidden shadow-xs">
         <div className="px-5 py-3.5 bg-sky-400 text-slate-950 font-bold">
-          Materiais Separados Aguardando Retirada
+          Materiais separados aguardando retirada
         </div>
         <div className="divide-y divide-slate-100 dark:divide-slate-700">
           {!reservas || reservas.length === 0 ? (
@@ -222,7 +222,7 @@ export function ReservasView() {
                     {r.quantidade}x {r.item?.nome}
                   </p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Solicitante: <strong>{r.solicitante}</strong> • Reservado em {formatarData(r.created_at)}
+                    Solicitante: <strong>{r.solicitante}</strong><br/>Reservado em {formatarData(r.created_at)}
                   </p>
                   {r.observacao && (
                     <p className="text-xs text-sky-400 mt-0.5">{r.observacao}</p>
@@ -235,7 +235,7 @@ export function ReservasView() {
                     onClick={() => acaoReserva.mutate({ id: r.id, acao: 'confirmar' })}
                     className="px-3.5 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-semibold cursor-pointer"
                   >
-                    ✓ Já Retirou (Entregar)
+                    ✓ Retirado
                   </button>
                   <button
                     type="button"

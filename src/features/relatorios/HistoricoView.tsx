@@ -19,12 +19,9 @@ export function HistoricoView() {
 
   return (
     <div className="space-y-4">
-      <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-sky-100 dark:border-slate-700 flex flex-wrap items-center justify-between gap-3">
+      <div className="bg-white dark:bg-slate-800 p-4 border border-sky-100 dark:border-slate-700 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-base font-bold">Histórico de Entradas e Saídas</h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Registro completo de tudo o que aconteceu no estoque da TI
-          </p>
+          <h2 className="text-2xl font-bold">Histórico de entradas e saídas</h2>
         </div>
 
         <select
@@ -40,7 +37,7 @@ export function HistoricoView() {
         </select>
       </div>
 
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-sky-100 dark:border-slate-700 overflow-x-auto shadow-xs">
+      <div className="bg-white dark:bg-slate-800 border border-sky-100 dark:border-slate-700 overflow-x-auto shadow-xs">
         <table className="w-full text-left border-collapse text-sm">
           <thead>
             <tr className="bg-sky-400 text-slate-950 font-semibold">

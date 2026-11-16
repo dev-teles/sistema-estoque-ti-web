@@ -10,9 +10,9 @@ export function EquipeView() {
   });
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-sky-100 dark:border-slate-700 overflow-hidden shadow-xs">
+    <div className="bg-white dark:bg-slate-800 border border-sky-100 dark:border-slate-700 overflow-hidden shadow-xs">
       <div className="px-5 py-3.5 bg-sky-400 text-slate-950 font-bold">
-        Membros da Equipe de TI com Acesso ao Sistema
+        Membros da Equipe de TI com acesso ao sistema
       </div>
       <table className="w-full text-left border-collapse text-sm">
         <thead>
