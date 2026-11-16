@@ -17,6 +17,8 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
   } | null>(null);
   const [quantidade, setQuantidade] = useState(1);
   const [motivo, setMotivo] = useState<'consumo' | 'transferencia' | 'dano'>('consumo');
+  const [taskIdAuvo, setTaskIdAuvo] = useState('');
+  const [buscandoAuvo, setBuscandoAuvo] = useState(false);
   const [destino, setDestino] = useState('');
   const [justificativa, setJustificativa] = useState('');
   const [msgErro, setMsgErro] = useState('');
@@ -47,6 +49,26 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
       ).data,
   });
 
+  const buscarTarefaAuvo = async () => {
+    const idLimpo = taskIdAuvo.replace(/\D/g, '');
+    if (!idLimpo) return;
+    setBuscandoAuvo(true);
+    setMsgErro('');
+    try {
+      const res = await api.get<{
+        data: { solicitante: string; orientacao?: string | null };
+      }>(`/auvo/tarefas/${idLimpo}`);
+      setDestino(res.data.data.solicitante);
+      if (res.data.data.orientacao) {
+        setJustificativa(res.data.data.orientacao);
+      }
+    } catch (err: any) {
+      setMsgErro(err?.response?.data?.message || 'Não foi possível buscar a tarefa no Auvo.');
+    } finally {
+      setBuscandoAuvo(false);
+    }
+  };
+
   const mutacaoMovimento = useMutation({
     mutationFn: async () => {
       if (!itemAcao) return;
@@ -73,6 +95,7 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
       qc.invalidateQueries({ queryKey: ['movimentacoes'] });
       setItemAcao(null);
       setQuantidade(1);
+      setTaskIdAuvo('');
       setDestino('');
       setJustificativa('');
       setMsgErro('');
@@ -252,6 +275,31 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
               (Disponível atual: {itemAcao.unidade.saldo_disponivel})
             </p>
 
+            {itemAcao.tipo === 'saida' && (
+              <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 space-y-2">
+                <label className="block text-xs font-semibold text-sky-400">
+                  🔗 Importar Tarefa do Auvo (opcional)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Nº da tarefa (ex: 395)"
+                    value={taskIdAuvo}
+                    onChange={(e) => setTaskIdAuvo(e.target.value)}
+                    className="min-w-0 flex-1 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-1.5 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={buscarTarefaAuvo}
+                    disabled={buscandoAuvo}
+                    className="px-3 py-1.5 rounded-xl bg-sky-400 hover:bg-sky-500 text-slate-950 font-bold text-xs cursor-pointer shrink-0 disabled:opacity-50"
+                  >
+                    {buscandoAuvo ? 'Buscando...' : 'Buscar'}
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="block text-xs font-semibold mb-1">Quantidade</label>
               <input
@@ -273,19 +321,19 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
                     className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
                   >
                     <option value="consumo">Uso normal / Entrega para colaborador</option>
-                    <option value="transferencia">Instalado em outro setor / sala</option>
+                    <option value="transferencia">Instalado em outro local / sala</option>
                     <option value="dano">Peça com defeito / queimada</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold mb-1">
-                    Para quem foi entregue? (ou nº do chamado)
+                    Para quem foi entregue? (ou nº da Tarefa Auvo)
                   </label>
                   <input
                     type="text"
                     value={destino}
                     onChange={(e) => setDestino(e.target.value)}
-                    placeholder="Ex: Maria (Financeiro) - Chamado #1090"
+                    placeholder="Ex: Maria (Tarefa Auvo #45890)"
                     className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
                   />
                 </div>
