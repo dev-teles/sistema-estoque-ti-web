@@ -8,8 +8,6 @@ interface AuvoTarefa {
   task_id: number;
   solicitante: string;
   orientacao?: string | null;
-  tecnico?: string | null;
-  data_tarefa?: string | null;
   modo_demo?: boolean;
 }
 
@@ -39,7 +37,7 @@ export function ReservasView() {
   const buscarNoAuvo = async () => {
     const idLimpo = taskIdAuvo.replace(/\D/g, '');
     if (!idLimpo) {
-      setErro('Digite o número da tarefa do Auvo para buscar.');
+      setErro('Informe o nº da tarefa.');
       return;
     }
     setErro('');
@@ -52,13 +50,9 @@ export function ReservasView() {
       if (tarefa.orientacao) {
         setObservacao(tarefa.orientacao);
       }
-      setAvisoAuvo(
-        tarefa.modo_demo
-          ? `Tarefa #${tarefa.task_id} importada (modo demonstração Auvo).`
-          : `Tarefa #${tarefa.task_id} importada do Auvo!`
-      );
+      setAvisoAuvo(`Tarefa #${tarefa.task_id} importada.`);
     } catch (err: any) {
-      setErro(err?.response?.data?.message || 'Não foi possível buscar a tarefa no Auvo.');
+      setErro(err?.response?.data?.message || 'Tarefa não encontrada.');
     } finally {
       setBuscandoAuvo(false);
     }
@@ -85,7 +79,7 @@ export function ReservasView() {
       setQuantidade(1);
       setErro('');
     },
-    onError: (err: any) => setErro(err?.response?.data?.message || 'Não foi possível reservar.'),
+    onError: (err: any) => setErro(err?.response?.data?.message || 'Erro ao reservar.'),
   });
 
   const acaoReserva = useMutation({
@@ -101,153 +95,159 @@ export function ReservasView() {
   });
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6">
-      {/* Formulário com Integração Auvo */}
-      <form
-        onSubmit={(e) => criarReserva.mutate(e)}
-        className="bg-slate-800 p-5 border border-slate-700 space-y-4 h-fit shadow-xs"
-      >
-        <div>
-          <h2 className="text-2xl font-bold whitespace-nowrap">Separar material para retirada</h2>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Importe direto pelo nº da tarefa do Auvo ou preencha manualmente.
-          </p>
-        </div>
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold text-[#f1ede4]">Retiradas</h1>
 
-        {/* Integração Auvo */}
-        <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-700 space-y-2">
-          <label className="block text-xs font-semibold text-sky-400">
-            🔗 Importar Tarefa do Auvo (opcional)
-          </label>
-          <div className="flex gap-2">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <form
+          onSubmit={(e) => criarReserva.mutate(e)}
+          className="lg:col-span-5 bg-[#0e1218] p-6 border border-[#1f2633] space-y-4 h-fit"
+        >
+          <h2 className="text-lg font-bold text-[#f1ede4] border-b border-[#1f2633] pb-3">
+            Nova Reserva
+          </h2>
+
+          <div className="p-3 bg-[#090b0f] border border-[#1f2633] space-y-2">
+            <label className="block text-xs font-medium text-[#d4a359]">
+              Tarefa Auvo (opcional)
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Nº da tarefa"
+                value={taskIdAuvo}
+                onChange={(e) => setTaskIdAuvo(e.target.value)}
+                className="min-w-0 flex-1 border border-[#2d3748] bg-[#0e1218] px-3 py-1.5 text-xs text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
+              />
+              <button
+                type="button"
+                onClick={buscarNoAuvo}
+                disabled={buscandoAuvo}
+                className="px-3.5 py-1.5 bg-[#d4a359] hover:bg-[#e0b26b] text-[#090b0f] font-semibold text-xs cursor-pointer shrink-0 disabled:opacity-50"
+              >
+                {buscandoAuvo ? '...' : 'Buscar'}
+              </button>
+            </div>
+            {avisoAuvo && <p className="text-xs text-[#34d399]">{avisoAuvo}</p>}
+          </div>
+
+          <div>
+            <label className="block text-xs text-[#949ba6] mb-1">Item</label>
+            <select
+              required
+              value={itemId}
+              onChange={(e) => setItemId(e.target.value)}
+              className="w-full border border-[#2d3748] bg-[#090b0f] px-3 py-2 text-sm text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
+            >
+              <option value="">Selecione...</option>
+              {catalogo?.map((i) => (
+                <option key={i.id} value={i.id}>
+                  {i.nome} ({i.saldo_disponivel})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-2">
+              <label className="block text-xs text-[#949ba6] mb-1">Solicitante</label>
+              <input
+                type="text"
+                required
+                placeholder="Nome"
+                value={solicitante}
+                onChange={(e) => setSolicitante(e.target.value)}
+                className="w-full border border-[#2d3748] bg-[#090b0f] px-3 py-2 text-sm text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs text-[#949ba6] mb-1">Qtd.</label>
+              <input
+                type="number"
+                min={1}
+                required
+                value={quantidade}
+                onChange={(e) => setQuantidade(Number(e.target.value))}
+                className="w-full border border-[#2d3748] bg-[#090b0f] px-3 py-2 text-sm text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs text-[#949ba6] mb-1">Observação</label>
             <input
               type="text"
-              placeholder="Nº da tarefa (ex: 395)"
-              value={taskIdAuvo}
-              onChange={(e) => setTaskIdAuvo(e.target.value)}
-              className="min-w-0 flex-1 rounded-xl border border-slate-600 bg-slate-800 px-3 py-1.5 text-sm"
+              placeholder="Opcional"
+              value={observacao}
+              onChange={(e) => setObservacao(e.target.value)}
+              className="w-full border border-[#2d3748] bg-[#090b0f] px-3 py-2 text-sm text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
             />
-            <button
-              type="button"
-              onClick={buscarNoAuvo}
-              disabled={buscandoAuvo}
-              className="px-3 py-1.5 rounded-xl bg-sky-400 hover:bg-sky-500 text-slate-950 font-bold text-xs cursor-pointer shrink-0 disabled:opacity-50"
-            >
-              {buscandoAuvo ? 'Buscando...' : 'Buscar no Auvo'}
-            </button>
           </div>
-          {avisoAuvo && <p className="text-[11px] text-green-400 font-medium">{avisoAuvo}</p>}
-        </div>
 
-        <div>
-          <label className="block text-xs font-semibold mb-1">Qual item?</label>
-          <select
-            required
-            value={itemId}
-            onChange={(e) => setItemId(e.target.value)}
-            className="w-full rounded-xl border border-slate-600 bg-slate-900 px-3 py-2 text-sm"
-          >
-            <option value="">Escolha o equipamento...</option>
-            {catalogo?.map((i) => (
-              <option key={i.id} value={i.id}>
-                {i.nome} ({i.saldo_disponivel} disponíveis)
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold mb-1">Quem vai retirar?</label>
-          <input
-            type="text"
-            required
-            placeholder="Nome do solicitante"
-            value={solicitante}
-            onChange={(e) => setSolicitante(e.target.value)}
-            className="w-full rounded-xl border border-slate-600 bg-slate-900 px-3 py-2 text-sm"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold mb-1">Quantidade</label>
-          <input
-            type="number"
-            min={1}
-            required
-            value={quantidade}
-            onChange={(e) => setQuantidade(Number(e.target.value))}
-            className="w-full rounded-xl border border-slate-600 bg-slate-900 px-3 py-2 text-sm"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold mb-1">Descrição da Tarefa</label>
-          <input
-            type="text"
-            placeholder="Digite uma observação"
-            value={observacao}
-            onChange={(e) => setObservacao(e.target.value)}
-            className="w-full rounded-xl border border-slate-600 bg-slate-900 px-3 py-2 text-sm"
-          />
-        </div>
-
-        {erro && <p className="text-xs text-red-500">{erro}</p>}
-
-        <button
-          type="submit"
-          className="w-full py-2.5 rounded-xl bg-sky-400 hover:bg-sky-500 text-slate-950 font-bold text-sm cursor-pointer"
-        >
-          Deixar separado
-        </button>
-      </form>
-
-      {/* Fila de Retirada */}
-      <div className="bg-slate-800 border border-slate-700 overflow-hidden shadow-xs">
-        <div className="px-5 py-3.5 bg-sky-400 text-slate-950 font-bold">
-          Materiais separados aguardando retirada
-        </div>
-        <div className="divide-y divide-slate-700">
-          {!reservas || reservas.length === 0 ? (
-            <p className="p-8 text-center text-sm text-slate-500">
-              Nenhum item separado aguardando retirada.
-            </p>
-          ) : (
-            reservas.map((r) => (
-              <div
-                key={r.id}
-                className="p-4 flex flex-wrap items-center justify-between gap-3 hover:bg-slate-700/30"
-              >
-                <div>
-                  <p className="font-bold text-slate-100">
-                    {r.quantidade}x {r.item?.nome}
-                  </p>
-                  <p className="text-xs text-slate-400">
-                    Solicitante: <strong>{r.solicitante}</strong><br/>Reservado em {formatarData(r.created_at)}
-                  </p>
-                  {r.observacao && (
-                    <p className="text-xs text-sky-400 mt-0.5">{r.observacao}</p>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => acaoReserva.mutate({ id: r.id, acao: 'confirmar' })}
-                    className="px-3.5 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-semibold cursor-pointer"
-                  >
-                    ✓ Retirado
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => acaoReserva.mutate({ id: r.id, acao: 'cancelar' })}
-                    className="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-red-950 hover:text-red-400 text-xs font-semibold cursor-pointer"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </div>
-            ))
+          {erro && (
+            <div className="border-l-2 border-[#f87171] bg-[#f87171]/10 px-3 py-2 text-xs text-[#f87171]">
+              {erro}
+            </div>
           )}
+
+          <button
+            type="submit"
+            className="w-full py-2.5 bg-[#d4a359] hover:bg-[#e0b26b] text-[#090b0f] font-semibold text-xs cursor-pointer transition-colors"
+          >
+            Reservar
+          </button>
+        </form>
+
+        {/* Lista de Reservas */}
+        <div className="lg:col-span-7 bg-[#0e1218] border border-[#1f2633] flex flex-col">
+          <div className="px-5 py-4 border-b border-[#1f2633] flex items-center justify-between">
+            <h2 className="text-base font-bold text-[#f1ede4]">Aguardando Retirada</h2>
+            <span className="text-xs text-[#949ba6]">{reservas?.length ?? 0}</span>
+          </div>
+
+          <div className="divide-y divide-[#1f2633]">
+            {!reservas || reservas.length === 0 ? (
+              <p className="p-10 text-center text-xs text-[#5e6673]">Nenhuma reserva pendente.</p>
+            ) : (
+              reservas.map((r) => (
+                <div
+                  key={r.id}
+                  className="p-5 flex flex-wrap items-center justify-between gap-4 hover:bg-[#141922] transition-colors"
+                >
+                  <div className="space-y-0.5 max-w-lg">
+                    <p className="font-semibold text-sm text-[#f1ede4]">
+                      <span className="text-[#d4a359] mr-1.5">{r.quantidade}x</span>
+                      {r.item?.nome}
+                    </p>
+                    <p className="text-xs text-[#949ba6]">
+                      {r.solicitante} • {formatarData(r.created_at)}
+                    </p>
+                    {r.observacao && (
+                      <p className="text-xs text-[#d4a359]/90">{r.observacao}</p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => acaoReserva.mutate({ id: r.id, acao: 'confirmar' })}
+                      className="px-3.5 py-1.5 border border-[#34d399]/40 bg-[#34d399]/10 hover:bg-[#34d399] hover:text-[#090b0f] text-[#34d399] text-xs font-semibold transition-colors cursor-pointer"
+                    >
+                      Entregar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => acaoReserva.mutate({ id: r.id, acao: 'cancelar' })}
+                      className="px-3 py-1.5 border border-[#2d3748] bg-[#090b0f] hover:border-[#f87171] hover:text-[#f87171] text-xs text-[#949ba6] transition-colors cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>

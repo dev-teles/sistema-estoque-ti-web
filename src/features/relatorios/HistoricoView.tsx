@@ -18,56 +18,65 @@ export function HistoricoView() {
   });
 
   return (
-    <div className="space-y-4">
-      <div className="bg-slate-800 p-4 border border-slate-700 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-2xl font-bold">Histórico de entradas e saídas</h2>
-        </div>
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-3xl font-bold text-[#f1ede4]">Histórico</h1>
 
         <select
-          aria-label="Filtrar histórico por tipo"
+          aria-label="Filtrar por tipo"
           value={tipo}
           onChange={(e) => setTipo(e.target.value)}
-          className="rounded-xl border border-slate-600 bg-slate-900 px-3 py-2 text-sm"
+          className="border border-[#2d3748] bg-[#0e1218] px-3.5 py-2 text-sm text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
         >
-          <option value="">Mostrar tudo</option>
-          <option value="entrada">Apenas Entradas</option>
-          <option value="saida">Apenas Saídas</option>
-          <option value="reserva">Apenas Reservas</option>
+          <option value="">Todos</option>
+          <option value="entrada">Entradas</option>
+          <option value="saida">Saídas</option>
+          <option value="reserva">Reservas</option>
         </select>
       </div>
 
-      <div className="bg-slate-800 border border-slate-700 overflow-x-auto shadow-xs">
+      <div className="bg-[#0e1218] border border-[#1f2633] overflow-x-auto">
         <table className="w-full text-left border-collapse text-sm">
           <thead>
-            <tr className="bg-sky-400 text-slate-950 font-semibold">
-              <th className="py-3 px-4">Quando</th>
-              <th className="py-3 px-4">O que houve</th>
-              <th className="py-3 px-4">Equipamento / Material</th>
-              <th className="py-3 px-4 text-center">Quantidade</th>
-              <th className="py-3 px-4 text-center">Ficou no Estoque</th>
-              <th className="py-3 px-4">Quem registrou</th>
-              <th className="py-3 px-4">Para quem / Observação</th>
+            <tr className="border-b border-[#2d3748] bg-[#090b0f] text-xs font-semibold text-[#949ba6]">
+              <th className="py-3 px-4">Data</th>
+              <th className="py-3 px-4">Tipo</th>
+              <th className="py-3 px-4">Item</th>
+              <th className="py-3 px-4 text-right">Qtd.</th>
+              <th className="py-3 px-4 text-right">Saldo</th>
+              <th className="py-3 px-4">Usuário</th>
+              <th className="py-3 px-4">Destino / Obs.</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-700">
+          <tbody className="divide-y divide-[#1f2633]">
             {data?.map((m) => {
-              const info = TIPO_LABEL[m.tipo] ?? { texto: m.tipo, cor: 'bg-slate-700 text-slate-200' };
+              const info = TIPO_LABEL[m.tipo] ?? {
+                texto: m.tipo,
+                cor: 'border-[#2d3748] bg-[#141922] text-[#949ba6]',
+                dot: 'bg-[#5e6673]',
+              };
               return (
-                <tr key={m.id}>
-                  <td className="py-3 px-4 whitespace-nowrap text-xs text-slate-500">
+                <tr key={m.id} className="hover:bg-[#141922] transition-colors">
+                  <td className="py-3 px-4 whitespace-nowrap text-xs text-[#949ba6]">
                     {formatarData(m.created_at)}
                   </td>
                   <td className="py-3 px-4">
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${info.cor}`}>
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2 py-0.5 border text-xs font-medium ${info.cor}`}
+                    >
+                      <span className={`w-1.5 h-1.5 ${info.dot}`} />
                       {info.texto}
                     </span>
                   </td>
-                  <td className="py-3 px-4 font-semibold">{m.item?.nome}</td>
-                  <td className="py-3 px-4 text-center font-bold">{m.quantidade} un</td>
-                  <td className="py-3 px-4 text-center font-medium">{m.saldo_fisico_apos} un</td>
-                  <td className="py-3 px-4">{m.user?.name}</td>
-                  <td className="py-3 px-4 text-xs text-slate-500">
+                  <td className="py-3 px-4 font-semibold text-[#f1ede4]">{m.item?.nome}</td>
+                  <td className="py-3 px-4 text-right font-bold text-[#f1ede4]">
+                    {m.quantidade}
+                  </td>
+                  <td className="py-3 px-4 text-right text-xs text-[#949ba6]">
+                    {m.saldo_fisico_apos}
+                  </td>
+                  <td className="py-3 px-4 text-xs text-[#f1ede4]">{m.user?.name}</td>
+                  <td className="py-3 px-4 text-xs text-[#949ba6]">
                     {m.destino || m.justificativa || '—'}
                   </td>
                 </tr>

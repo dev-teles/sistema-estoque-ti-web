@@ -1,50 +1,62 @@
 import type { UnidadeEstoque } from '../../types/estoque';
 
-export const TIPO_LABEL: Record<string, { texto: string; cor: string }> = {
+export const TIPO_LABEL: Record<string, { texto: string; cor: string; dot: string }> = {
   entrada: {
     texto: 'Entrada',
-    cor: 'bg-green-950/70 text-green-400',
+    cor: 'border-[#34d399]/30 bg-[#34d399]/10 text-[#34d399]',
+    dot: 'bg-[#34d399]',
   },
   saida: {
     texto: 'Saída',
-    cor: 'bg-red-950/70 text-red-400',
+    cor: 'border-[#f87171]/30 bg-[#f87171]/10 text-[#f87171]',
+    dot: 'bg-[#f87171]',
   },
   reserva: {
-    texto: 'Reservado',
-    cor: 'bg-sky-950/70 text-sky-400',
+    texto: 'Reserva',
+    cor: 'border-[#d4a359]/40 bg-[#d4a359]/10 text-[#d4a359]',
+    dot: 'bg-[#d4a359]',
   },
   cancelamento_reserva: {
-    texto: 'Reserva Cancelada',
-    cor: 'bg-slate-700 text-slate-300',
+    texto: 'Cancelada',
+    cor: 'border-[#2d3748] bg-[#141922] text-[#949ba6]',
+    dot: 'bg-[#5e6673]',
   },
   estorno: {
-    texto: 'Correção / Ajuste',
-    cor: 'bg-amber-950/70 text-amber-400',
+    texto: 'Ajuste',
+    cor: 'border-[#e5a93c]/40 bg-[#e5a93c]/10 text-[#e5a93c]',
+    dot: 'bg-[#e5a93c]',
   },
   ajuste_auditoria: {
-    texto: 'Ajuste de Contagem',
-    cor: 'bg-amber-950/70 text-amber-400',
+    texto: 'Auditoria',
+    cor: 'border-[#e5a93c]/40 bg-[#e5a93c]/10 text-[#e5a93c]',
+    dot: 'bg-[#e5a93c]',
   },
 };
 
 export function StatusBadge({ status }: { status: UnidadeEstoque['status_reposicao'] }) {
   const map = {
     regular: {
-      label: 'Tudo certo',
-      cls: 'bg-green-950/70 text-green-400',
+      label: 'Em dia',
+      cls: 'border-[#34d399]/30 bg-[#34d399]/10 text-[#34d399]',
+      dot: 'bg-[#34d399]',
     },
     alerta: {
-      label: 'Poucos itens',
-      cls: 'bg-amber-950/70 text-amber-400',
+      label: 'Estoque baixo',
+      cls: 'border-[#e5a93c]/40 bg-[#e5a93c]/10 text-[#e5a93c]',
+      dot: 'bg-[#e5a93c]',
     },
     critico: {
-      label: 'Em Falta',
-      cls: 'bg-red-950/70 text-red-400',
+      label: 'Em falta',
+      cls: 'border-[#f87171]/40 bg-[#f87171]/10 text-[#f87171]',
+      dot: 'bg-[#f87171]',
     },
   }[status];
 
   return (
-    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${map.cls}`}>
+    <span
+      className={`inline-flex items-center gap-2 px-2.5 py-1 border text-xs font-medium ${map.cls}`}
+    >
+      <span className={`w-1.5 h-1.5 ${map.dot}`} />
       {map.label}
     </span>
   );

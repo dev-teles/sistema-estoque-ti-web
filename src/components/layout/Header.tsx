@@ -25,54 +25,59 @@ export function Header({
   ];
 
   return (
-    <header className="sticky top-0 z-30 bg-slate-800 border-b border-slate-700 shadow-xs">
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
-        {/* Esquerda: Logo Estoque TI */}
+    <header className="sticky top-0 z-30 bg-[#090b0f]/95 backdrop-blur-md border-b border-[#1f2633]">
+      <div className="max-w-[1360px] mx-auto px-5 sm:px-8 lg:px-12 h-20 flex items-center justify-between gap-6">
         <button
           type="button"
           onClick={() => onSelectAba('inicio')}
-          className="flex items-center shrink-0 cursor-pointer"
+          className="flex items-center shrink-0 cursor-pointer group"
         >
           <img
             src="/logo.png"
-            alt="Estoque T.I. - Sistema de Gestão"
-            className="h-11 w-auto object-contain"
+            alt="Estoque T.I."
+            className="h-10 sm:h-11 w-auto object-contain transition-opacity group-hover:opacity-85"
           />
         </button>
 
-        {/* Centro: Barra de navegação no meio do header */}
-        <nav className="flex items-center justify-center gap-2 sm:gap-4 lg:gap-6 flex-1 overflow-x-auto">
+        <nav className="flex items-center h-full overflow-x-auto no-scrollbar border-x border-[#1f2633]/60 px-2 sm:px-4">
           {abas
             .filter((a) => a.visivel)
-            .map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => onSelectAba(item.id)}
-                className={`px-3.5 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors cursor-pointer ${
-                  aba === item.id
-                    ? 'bg-sky-400 text-slate-950 font-bold shadow-xs'
-                    : 'text-slate-300 hover:bg-slate-700'
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
+            .map((item) => {
+              const ativo = aba === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onSelectAba(item.id)}
+                  className={`relative h-20 px-4 sm:px-5 flex items-center text-sm whitespace-nowrap transition-colors cursor-pointer ${
+                    ativo
+                      ? 'text-[#f1ede4] font-semibold'
+                      : 'text-[#949ba6] hover:text-[#f1ede4]'
+                  }`}
+                >
+                  <span>{item.label}</span>
+                  {ativo && (
+                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#d4a359]" />
+                  )}
+                </button>
+              );
+            })}
         </nav>
 
-        {/* Direita: Usuário e Sair */}
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-4 shrink-0">
           <div className="text-right hidden md:block">
-            <p className="text-sm font-semibold text-slate-100 leading-tight">
+            <p className="text-xs font-semibold text-[#f1ede4] leading-tight">
               {user.name}
             </p>
-            <p className="text-xs text-sky-400">{user.role_label}</p>
+            <p className="text-[11px] text-[#d4a359] mt-0.5">
+              {user.role_label}
+            </p>
           </div>
 
           <button
             type="button"
             onClick={onLogout}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-red-950/60 hover:text-red-400 transition-colors cursor-pointer"
+            className="px-3.5 py-2 border border-[#2d3748] bg-[#0e1218] hover:border-[#f87171]/60 hover:text-[#f87171] text-xs font-medium text-[#949ba6] transition-colors cursor-pointer"
           >
             Sair
           </button>

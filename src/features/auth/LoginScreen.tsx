@@ -24,79 +24,88 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-50 flex flex-col justify-center items-center p-4">
-      <div className="w-full max-w-md bg-slate-800 rounded-2xl shadow-lg border border-slate-700 p-6 sm:p-8">
-        <div className="flex flex-col items-center mb-6">
+    <div className="min-h-screen bg-[#090b0f] text-[#f1ede4] flex items-center justify-center p-4 selection:bg-[#d4a359] selection:text-[#090b0f]">
+      <div className="w-full max-w-md bg-[#0e1218] border border-[#1f2633] p-8">
+        <div className="flex flex-col items-center mb-8">
           <img
             src="/logo.png"
-            alt="Estoque T.I. - Sistema de Gestão"
-            className="w-full max-w-xs h-auto object-contain mb-2"
+            alt="Estoque T.I."
+            className="h-16 w-auto object-contain mb-3"
           />
-          <p className="text-xs text-slate-400">Entre para gerenciar os materiais</p>
+          <p className="text-xs text-[#949ba6]">Acesso ao sistema</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Seu E-mail</label>
+            <label className="block text-xs font-medium text-[#949ba6] mb-1.5">
+              E-mail
+            </label>
             <input
               type="email"
               required
               aria-label="E-mail"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-slate-600 bg-slate-900 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"
+              className="w-full border border-[#2d3748] bg-[#090b0f] px-3.5 py-2.5 text-sm text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Sua Senha</label>
+            <label className="block text-xs font-medium text-[#949ba6] mb-1.5">
+              Senha
+            </label>
             <input
               type="password"
               required
               aria-label="Senha"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-slate-600 bg-slate-900 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"
+              className="w-full border border-[#2d3748] bg-[#090b0f] px-3.5 py-2.5 text-sm text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
             />
           </div>
 
-          {erro && <p className="text-xs text-red-500 font-medium">{erro}</p>}
+          {erro && (
+            <div className="border-l-2 border-[#f87171] bg-[#f87171]/10 px-3 py-2 text-xs text-[#f87171]">
+              {erro}
+            </div>
+          )}
 
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-3 px-4 rounded-xl bg-sky-400 hover:bg-sky-500 text-slate-950 font-bold text-sm transition-colors cursor-pointer disabled:opacity-50"
+            className="w-full py-3 bg-[#d4a359] hover:bg-[#e0b26b] text-[#090b0f] font-semibold text-sm transition-colors cursor-pointer disabled:opacity-50"
           >
             {submitting ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
 
-        <div className="mt-6 pt-5 border-t border-slate-700">
-          <p className="text-xs text-slate-400 mb-2.5 font-medium">
-            Acesso rápido para testar (clique em um perfil):
-          </p>
+        <div className="mt-6 pt-5 border-t border-[#1f2633]">
+          <p className="text-xs text-[#5e6673] mb-2.5">Acesso rápido:</p>
           <div className="grid grid-cols-3 gap-2">
             {[
               { label: 'Admin', email: 'admin@estoque.local' },
               { label: 'Gestor', email: 'gestor.ti@estoque.local' },
               { label: 'Operador', email: 'operador.ti@estoque.local' },
-            ].map((c) => (
-              <button
-                key={c.email}
-                type="button"
-                onClick={() => {
-                  setEmail(c.email);
-                  setPassword('password');
-                }}
-                className={`text-xs py-2 px-2 rounded-lg border font-medium cursor-pointer transition-colors ${
-                  email === c.email
-                    ? 'border-sky-400 bg-sky-950/40 text-sky-300 font-bold'
-                    : 'border-slate-600 hover:bg-slate-700'
-                }`}
-              >
-                {c.label}
-              </button>
-            ))}
+            ].map((c) => {
+              const selecionado = email === c.email;
+              return (
+                <button
+                  key={c.email}
+                  type="button"
+                  onClick={() => {
+                    setEmail(c.email);
+                    setPassword('password');
+                  }}
+                  className={`py-2 px-2 border text-xs font-medium transition-colors cursor-pointer ${
+                    selecionado
+                      ? 'border-[#d4a359] bg-[#d4a359]/10 text-[#f1ede4]'
+                      : 'border-[#1f2633] bg-[#090b0f] text-[#949ba6] hover:border-[#2d3748]'
+                  }`}
+                >
+                  {c.label}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>

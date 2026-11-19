@@ -16,10 +16,6 @@ interface Dashboard {
   ultimas_movimentacoes: Movimentacao[];
 }
 
-const card = 'text-left bg-slate-800 p-5 rounded-2xl border-2 transition-colors cursor-pointer shadow-xs';
-const painel = 'bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden shadow-xs';
-const cabecalho = 'px-5 py-4 border-b border-slate-700 flex items-center justify-between';
-
 export function InicioView({ onNavigate }: { onNavigate: (aba: Aba) => void }) {
   const qc = useQueryClient();
 
@@ -38,124 +34,147 @@ export function InicioView({ onNavigate }: { onNavigate: (aba: Aba) => void }) {
   });
 
   if (!data) {
-    return <p className="text-sm">Carregando resumo do estoque...</p>;
+    return <p className="text-sm text-[#949ba6]">Carregando...</p>;
   }
 
   const { kpis, reservas_pendentes, ultimas_movimentacoes } = data;
 
-  const cards = [
+  const indicadores = [
     {
-      rotulo: 'Itens em dia',
+      rotulo: 'Em dia',
       valor: kpis.itens_regulares,
-      borda: 'border-green-900/60 hover:border-green-400',
-      badge: 'bg-gray-950 text-white',
-      numero: 'text-white',
+      acento: 'text-[#34d399]',
+      barra: 'bg-[#34d399]',
     },
     {
-      rotulo: 'Poucos itens restantes',
+      rotulo: 'Estoque baixo',
       valor: kpis.itens_alerta,
-      borda: 'border-amber-900/60 hover:border-amber-400',
-      badge: 'bg-amber-950 text-amber-400',
-      numero: 'text-amber-500',
+      acento: 'text-[#e5a93c]',
+      barra: 'bg-[#e5a93c]',
     },
     {
-      rotulo: 'Em Falta',
+      rotulo: 'Em falta',
       valor: kpis.itens_criticos,
-      borda: 'border-red-900/60 hover:border-red-400',
-      badge: 'bg-red-950 text-red-400',
-      numero: 'text-red-500',
+      acento: 'text-[#f87171]',
+      barra: 'bg-[#f87171]',
     },
   ];
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-4xl font-bold text-slate-100 mb-12">Como está o estoque hoje?</h2>
+    <div className="space-y-8">
+      <h1 className="text-3xl font-bold text-[#f1ede4]">Resumo do Estoque</h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {cards.map((c) => (
-          <button key={c.rotulo} type="button" onClick={() => onNavigate('estoque')} className={`${card} ${c.borda}`}>
-            <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold ${c.badge}`}>{c.rotulo}</span>
-            <p className={`text-3xl font-bold mt-2 ${c.numero}`}>{c.valor} itens</p>
+      <div className="grid grid-cols-1 md:grid-cols-3 border border-[#1f2633] bg-[#0e1218] divide-y md:divide-y-0 md:divide-x divide-[#1f2633]">
+        {indicadores.map((item) => (
+          <button
+            key={item.rotulo}
+            type="button"
+            onClick={() => onNavigate('estoque')}
+            className="p-6 text-left hover:bg-[#141922] transition-colors cursor-pointer"
+          >
+            <div className={`w-6 h-[2px] ${item.barra} mb-4`} />
+            <div className="flex items-baseline justify-between gap-4">
+              <span className="text-sm font-medium text-[#949ba6]">{item.rotulo}</span>
+              <span className={`text-3xl font-bold ${item.acento}`}>{item.valor}</span>
+            </div>
           </button>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className={painel}>
-          <div className={cabecalho}>
-            <h3 className="text-xl font-bold text-slate-100">
-              Aguardando Retirada ({kpis.reservas_pendentes})
-            </h3>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Retiradas Pendentes */}
+        <section className="lg:col-span-5 border border-[#1f2633] bg-[#0e1218] flex flex-col">
+          <div className="px-5 py-4 border-b border-[#1f2633] flex items-center justify-between gap-4">
+            <h2 className="text-base font-bold text-[#f1ede4]">
+              Retiradas ({kpis.reservas_pendentes})
+            </h2>
             <button
               type="button"
               onClick={() => onNavigate('reservas')}
-              className="px-3 py-1.5 rounded-lg bg-sky-400 hover:bg-sky-500 text-slate-950 text-xs font-bold cursor-pointer"
+              className="px-3 py-1.5 bg-[#d4a359] hover:bg-[#e0b26b] text-[#090b0f] text-xs font-semibold cursor-pointer transition-colors"
             >
               + Nova Reserva
             </button>
           </div>
 
-          <div className="divide-y divide-slate-700">
+          <div className="divide-y divide-[#1f2633] flex-1">
             {reservas_pendentes.length === 0 ? (
-              <p className="p-6 text-sm text-slate-500 text-center">Nenhuma retirada pendente no momento.</p>
+              <p className="p-8 text-center text-xs text-[#5e6673]">Nenhuma retirada pendente.</p>
             ) : (
               reservas_pendentes.map((r) => (
-                <div key={r.id} className="px-5 py-3.5 flex items-center justify-between gap-3 text-sm">
-                  <div>
-                    <p className="font-semibold text-slate-100">
+                <div
+                  key={r.id}
+                  className="px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-[#141922] transition-colors"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-[#f1ede4] truncate">
                       {r.quantidade}x {r.item?.nome}
                     </p>
-                    <p className="text-xs text-slate-400">Para: {r.solicitante}</p>
+                    <p className="text-xs text-[#949ba6] truncate">{r.solicitante}</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => confirmarEntrega.mutate(r.id)}
                     disabled={confirmarEntrega.isPending}
-                    className="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-green-600 text-white text-xs font-semibold cursor-pointer shrink-0"
+                    className="px-3 py-1.5 border border-[#2d3748] bg-[#090b0f] hover:border-[#34d399] hover:text-[#34d399] text-xs font-medium text-[#f1ede4] cursor-pointer shrink-0 transition-colors"
                   >
-                    Confirmar Entrega
+                    Entregar
                   </button>
                 </div>
               ))
             )}
           </div>
-        </div>
+        </section>
 
-        <div className={painel}>
-          <div className={cabecalho}>
-            <div>
-              <h3 className="font-bold text-slate-100">Últimas Atividades</h3>
-              <p className="text-xs text-slate-400">O que entrou ou saiu recentemente</p>
-            </div>
+        {/* Últimas Movimentações */}
+        <section className="lg:col-span-7 border border-[#1f2633] bg-[#0e1218] flex flex-col">
+          <div className="px-5 py-4 border-b border-[#1f2633] flex items-center justify-between gap-4">
+            <h2 className="text-base font-bold text-[#f1ede4]">Últimas Movimentações</h2>
             <button
               type="button"
               onClick={() => onNavigate('historico')}
-              className="text-xs text-sky-400 font-semibold hover:underline cursor-pointer"
+              className="text-xs font-semibold text-[#d4a359] hover:underline cursor-pointer"
             >
               Ver tudo →
             </button>
           </div>
 
-          <div className="divide-y divide-slate-700">
-            {ultimas_movimentacoes.slice(0, 5).map((m) => {
-              const info = TIPO_LABEL[m.tipo] ?? { texto: m.tipo, cor: 'bg-slate-700 text-slate-200' };
+          <div className="divide-y divide-[#1f2633]">
+            {ultimas_movimentacoes.slice(0, 6).map((m) => {
+              const info = TIPO_LABEL[m.tipo] ?? {
+                texto: m.tipo,
+                cor: 'border-[#2d3748] bg-[#141922] text-[#949ba6]',
+                dot: 'bg-[#5e6673]',
+              };
               return (
-                <div key={m.id} className="px-5 py-3 flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-3">
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${info.cor}`}>{info.texto}</span>
-                    <div>
-                      <p className="font-medium text-slate-100">{m.item?.nome}</p>
-                      <p className="text-xs text-slate-400">
-                        Por {m.user?.name} • {formatarData(m.created_at)}
+                <div
+                  key={m.id}
+                  className="px-5 py-3 flex items-center justify-between gap-4 hover:bg-[#141922] transition-colors"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2 py-0.5 border text-xs font-medium shrink-0 ${info.cor}`}
+                    >
+                      <span className={`w-1.5 h-1.5 ${info.dot}`} />
+                      {info.texto}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-[#f1ede4] truncate">
+                        {m.item?.nome}
+                      </p>
+                      <p className="text-xs text-[#5e6673]">
+                        {m.user?.name} • {formatarData(m.created_at)}
                       </p>
                     </div>
                   </div>
-                  <span className="font-bold text-slate-200">{m.quantidade} un</span>
+                  <span className="text-sm font-semibold text-[#f1ede4] shrink-0">
+                    {m.quantidade} un
+                  </span>
                 </div>
               );
             })}
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );

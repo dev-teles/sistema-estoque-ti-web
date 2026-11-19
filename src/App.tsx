@@ -15,8 +15,8 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 text-slate-50 flex items-center justify-center">
-        <p className="text-base font-medium">Carregando Estoque de TI...</p>
+      <div className="min-h-screen bg-[#090b0f] text-[#f1ede4] flex items-center justify-center">
+        <p className="text-xs uppercase tracking-widest text-[#949ba6]">Carregando...</p>
       </div>
     );
   }
@@ -29,7 +29,7 @@ export default function App() {
   const ehAdmin = user.role === 'admin';
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-50 flex flex-col">
+    <div className="min-h-screen bg-[#090b0f] text-[#f1ede4] flex flex-col selection:bg-[#d4a359] selection:text-[#090b0f]">
       <Header
         user={user}
         aba={aba}
@@ -37,7 +37,7 @@ export default function App() {
         onLogout={logout}
       />
 
-      <main className="max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 flex-1">
+      <main className="max-w-[1360px] w-full mx-auto px-5 sm:px-8 lg:px-12 py-8 flex-1">
         {aba === 'inicio' && <InicioView onNavigate={setAba} />}
         {aba === 'estoque' && <EstoqueView podeGerir={podeGerir} />}
         {aba === 'reservas' && <ReservasView />}
