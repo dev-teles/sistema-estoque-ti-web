@@ -1,8 +1,12 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
+:root {
+  color-scheme: dark;
+}
 
 body {
   margin: 0;
   font-family: 'Inter', 'Roboto', system-ui, -apple-system, sans-serif;
+  background-color: var(--color-slate-900);
+  color: var(--color-slate-50);
 }

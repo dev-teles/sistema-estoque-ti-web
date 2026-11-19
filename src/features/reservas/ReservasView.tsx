@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { formatarData } from '../../utils/format';
@@ -105,17 +105,17 @@ export function ReservasView() {
       {/* Formulário com Integração Auvo */}
       <form
         onSubmit={(e) => criarReserva.mutate(e)}
-        className="bg-white dark:bg-slate-800 p-5 border border-sky-100 dark:border-slate-700 space-y-4 h-fit shadow-xs"
+        className="bg-slate-800 p-5 border border-slate-700 space-y-4 h-fit shadow-xs"
       >
         <div>
           <h2 className="text-2xl font-bold whitespace-nowrap">Separar material para retirada</h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-400 mt-0.5">
             Importe direto pelo nº da tarefa do Auvo ou preencha manualmente.
           </p>
         </div>
 
         {/* Integração Auvo */}
-        <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 space-y-2">
+        <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-700 space-y-2">
           <label className="block text-xs font-semibold text-sky-400">
             🔗 Importar Tarefa do Auvo (opcional)
           </label>
@@ -125,7 +125,7 @@ export function ReservasView() {
               placeholder="Nº da tarefa (ex: 395)"
               value={taskIdAuvo}
               onChange={(e) => setTaskIdAuvo(e.target.value)}
-              className="min-w-0 flex-1 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-1.5 text-sm"
+              className="min-w-0 flex-1 rounded-xl border border-slate-600 bg-slate-800 px-3 py-1.5 text-sm"
             />
             <button
               type="button"
@@ -145,7 +145,7 @@ export function ReservasView() {
             required
             value={itemId}
             onChange={(e) => setItemId(e.target.value)}
-            className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+            className="w-full rounded-xl border border-slate-600 bg-slate-900 px-3 py-2 text-sm"
           >
             <option value="">Escolha o equipamento...</option>
             {catalogo?.map((i) => (
@@ -164,7 +164,7 @@ export function ReservasView() {
             placeholder="Nome do solicitante"
             value={solicitante}
             onChange={(e) => setSolicitante(e.target.value)}
-            className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+            className="w-full rounded-xl border border-slate-600 bg-slate-900 px-3 py-2 text-sm"
           />
         </div>
 
@@ -176,7 +176,7 @@ export function ReservasView() {
             required
             value={quantidade}
             onChange={(e) => setQuantidade(Number(e.target.value))}
-            className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+            className="w-full rounded-xl border border-slate-600 bg-slate-900 px-3 py-2 text-sm"
           />
         </div>
 
@@ -187,7 +187,7 @@ export function ReservasView() {
             placeholder="Digite uma observação"
             value={observacao}
             onChange={(e) => setObservacao(e.target.value)}
-            className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+            className="w-full rounded-xl border border-slate-600 bg-slate-900 px-3 py-2 text-sm"
           />
         </div>
 
@@ -202,11 +202,11 @@ export function ReservasView() {
       </form>
 
       {/* Fila de Retirada */}
-      <div className="bg-white dark:bg-slate-800 border border-sky-100 dark:border-slate-700 overflow-hidden shadow-xs">
+      <div className="bg-slate-800 border border-slate-700 overflow-hidden shadow-xs">
         <div className="px-5 py-3.5 bg-sky-400 text-slate-950 font-bold">
           Materiais separados aguardando retirada
         </div>
-        <div className="divide-y divide-slate-100 dark:divide-slate-700">
+        <div className="divide-y divide-slate-700">
           {!reservas || reservas.length === 0 ? (
             <p className="p-8 text-center text-sm text-slate-500">
               Nenhum item separado aguardando retirada.
@@ -215,13 +215,13 @@ export function ReservasView() {
             reservas.map((r) => (
               <div
                 key={r.id}
-                className="p-4 flex flex-wrap items-center justify-between gap-3 hover:bg-sky-50/40 dark:hover:bg-slate-700/30"
+                className="p-4 flex flex-wrap items-center justify-between gap-3 hover:bg-slate-700/30"
               >
                 <div>
-                  <p className="font-bold text-slate-800 dark:text-slate-100">
+                  <p className="font-bold text-slate-100">
                     {r.quantidade}x {r.item?.nome}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-slate-400">
                     Solicitante: <strong>{r.solicitante}</strong><br/>Reservado em {formatarData(r.created_at)}
                   </p>
                   {r.observacao && (
@@ -240,7 +240,7 @@ export function ReservasView() {
                   <button
                     type="button"
                     onClick={() => acaoReserva.mutate({ id: r.id, acao: 'cancelar' })}
-                    className="px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-red-100 hover:text-red-600 text-xs font-semibold cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-red-950 hover:text-red-400 text-xs font-semibold cursor-pointer"
                   >
                     Cancelar
                   </button>

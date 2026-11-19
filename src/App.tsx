@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from './hooks/useAuth';
 import { Header } from './components/layout/Header';
 import { LoginScreen } from './features/auth/LoginScreen';
@@ -13,13 +13,9 @@ export default function App() {
   const { user, loading, login, logout } = useAuth();
   const [aba, setAba] = useState<Aba>('inicio');
 
-  useEffect(() => {
-    document.documentElement.classList.add('dark');
-  }, []);
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-sky-50 dark:bg-slate-900 text-slate-700 dark:text-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-900 text-slate-50 flex items-center justify-center">
         <p className="text-base font-medium">Carregando Estoque de TI...</p>
       </div>
     );
@@ -33,7 +29,7 @@ export default function App() {
   const ehAdmin = user.role === 'admin';
 
   return (
-    <div className="min-h-screen bg-sky-50 dark:bg-slate-900 text-slate-700 dark:text-slate-50 flex flex-col">
+    <div className="min-h-screen bg-slate-900 text-slate-50 flex flex-col">
       <Header
         user={user}
         aba={aba}
