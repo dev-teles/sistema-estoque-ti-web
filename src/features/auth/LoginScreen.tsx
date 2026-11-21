@@ -1,12 +1,13 @@
 import { useState } from 'react';
 
 interface LoginScreenProps {
-  onLogin: (email: string, password: string) => Promise<void>;
+  onLogin: (email: string, password: string, website?: string) => Promise<void>;
 }
 
 export function LoginScreen({ onLogin }: LoginScreenProps) {
   const [email, setEmail] = useState('admin@estoque.local');
   const [password, setPassword] = useState('password');
+  const [website, setWebsite] = useState('');
   const [erro, setErro] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -15,9 +16,9 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     setErro('');
     setSubmitting(true);
     try {
-      await onLogin(email, password);
-    } catch {
-      setErro('E-mail ou senha incorretos.');
+      await onLogin(email, password, website);
+    } catch (err: any) {
+      setErro(err?.response?.data?.message || 'E-mail ou senha incorretos.');
     } finally {
       setSubmitting(false);
     }
@@ -36,6 +37,17 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="hidden" aria-hidden="true">
+            <input
+              type="text"
+              name="website"
+              tabIndex={-1}
+              autoComplete="off"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+            />
+          </div>
+
           <div>
             <label className="block text-xs font-medium text-[#949ba6] mb-1.5">
               E-mail
