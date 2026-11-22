@@ -23,14 +23,57 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
   const [msgErro, setMsgErro] = useState('');
 
   const [modalNovoItem, setModalNovoItem] = useState(false);
+  const [itemEditando, setItemEditando] = useState<UnidadeEstoque | null>(null);
   const [novoNome, setNovoNome] = useState('');
   const [novaCatId, setNovaCatId] = useState('');
   const [novoMinimo, setNovoMinimo] = useState(5);
   const [erroNovoItem, setErroNovoItem] = useState('');
+  const [criandoCategoria, setCriandoCategoria] = useState(false);
+  const [nomeNovaCategoria, setNomeNovaCategoria] = useState('');
+
+  const abrirModalMovimento = (unidade: UnidadeEstoque, tipo: 'entrada' | 'saida') => {
+    setItemAcao({ unidade, tipo });
+    setQuantidade(1);
+    setMotivo('consumo');
+    setTaskIdAuvo('');
+    setDestino('');
+    setJustificativa('');
+    setMsgErro('');
+  };
+
+  const abrirModalItem = (unidade: UnidadeEstoque | null) => {
+    setItemEditando(unidade);
+    setNovoNome(unidade ? unidade.item.nome : '');
+    setNovaCatId(unidade ? String(unidade.item.categoria_id || unidade.item.categoria?.id || '') : '');
+    setNovoMinimo(unidade ? unidade.item.quantidade_minima : 5);
+    setErroNovoItem('');
+    setCriandoCategoria(false);
+    setNomeNovaCategoria('');
+    setModalNovoItem(true);
+  };
 
   const { data: categorias } = useQuery({
     queryKey: ['categorias'],
     queryFn: async () => (await api.get<{ data: Categoria[] }>('/categorias')).data.data,
+  });
+
+  const criarCategoria = useMutation({
+    mutationFn: async () => {
+      const res = await api.post<{ data: Categoria }>('/categorias', { nome: nomeNovaCategoria });
+      return res.data.data;
+    },
+    onSuccess: (cat) => {
+      qc.invalidateQueries({ queryKey: ['categorias'] });
+      setNovaCatId(String(cat.id));
+      setNomeNovaCategoria('');
+      setCriandoCategoria(false);
+      setErroNovoItem('');
+    },
+    onError: (err: any) => {
+      const errors = err?.response?.data?.errors;
+      const firstError = errors ? (Object.values(errors).flat()[0] as string) : null;
+      setErroNovoItem(firstError || err?.response?.data?.message || 'Erro ao criar categoria.');
+    },
   });
 
   const { data: estoque, isLoading } = useQuery({
@@ -104,12 +147,20 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
   const criarItem = useMutation({
     mutationFn: async (e: React.FormEvent) => {
       e.preventDefault();
-      await api.post('/catalogo', {
-        nome: novoNome,
-        categoria_id: Number(novaCatId),
-        quantidade_minima: novoMinimo,
-        lead_time_dias: 7,
-      });
+      if (itemEditando) {
+        await api.put(`/catalogo/${itemEditando.item.id}`, {
+          nome: novoNome,
+          categoria_id: Number(novaCatId),
+          quantidade_minima: novoMinimo,
+        });
+      } else {
+        await api.post('/catalogo', {
+          nome: novoNome,
+          categoria_id: Number(novaCatId),
+          quantidade_minima: novoMinimo,
+          lead_time_dias: 7,
+        });
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['estoque'] });
@@ -117,10 +168,27 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
       qc.invalidateQueries({ queryKey: ['dashboard'] });
       setNovoNome('');
       setErroNovoItem('');
+      setItemEditando(null);
       setModalNovoItem(false);
     },
     onError: (err: any) => {
-      setErroNovoItem(err?.response?.data?.message || 'Erro ao criar item.');
+      setErroNovoItem(err?.response?.data?.message || 'Erro ao salvar item.');
+    },
+  });
+
+  const inativarItem = useMutation({
+    mutationFn: async (id: number) => {
+      await api.delete(`/catalogo/${id}`);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['estoque'] });
+      qc.invalidateQueries({ queryKey: ['catalogo-simples'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      setItemEditando(null);
+      setModalNovoItem(false);
+    },
+    onError: (err: any) => {
+      setErroNovoItem(err?.response?.data?.message || 'Erro ao inativar item.');
     },
   });
 
@@ -132,10 +200,7 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
         {podeGerir && (
           <button
             type="button"
-            onClick={() => {
-              setErroNovoItem('');
-              setModalNovoItem(true);
-            }}
+            onClick={() => abrirModalItem(null)}
             className="px-4 py-2 bg-[#d4a359] hover:bg-[#e0b26b] text-[#090b0f] font-semibold text-xs cursor-pointer transition-colors"
           >
             + Novo Item
@@ -233,27 +298,28 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
                   <td className="py-3.5 px-4 text-right space-x-2 whitespace-nowrap">
                     <button
                       type="button"
-                      onClick={() => {
-                        setItemAcao({ unidade: u, tipo: 'entrada' });
-                        setQuantidade(1);
-                        setMsgErro('');
-                      }}
+                      onClick={() => abrirModalMovimento(u, 'entrada')}
                       className="px-3 py-1.5 border border-[#34d399]/40 bg-[#34d399]/10 hover:bg-[#34d399] hover:text-[#090b0f] text-[#34d399] font-semibold text-xs transition-colors cursor-pointer"
                     >
                       + Entrada
                     </button>
                     <button
                       type="button"
-                      onClick={() => {
-                        setItemAcao({ unidade: u, tipo: 'saida' });
-                        setQuantidade(1);
-                        setMsgErro('');
-                      }}
+                      onClick={() => abrirModalMovimento(u, 'saida')}
                       disabled={u.saldo_disponivel <= 0}
                       className="px-3 py-1.5 border border-[#2d3748] bg-[#090b0f] hover:border-[#f1ede4] text-[#f1ede4] font-semibold text-xs transition-colors cursor-pointer disabled:opacity-30"
                     >
                       − Saída
                     </button>
+                    {podeGerir && (
+                      <button
+                        type="button"
+                        onClick={() => abrirModalItem(u)}
+                        className="px-2.5 py-1.5 border border-[#2d3748] bg-[#090b0f] hover:border-[#d4a359] hover:text-[#d4a359] text-[#949ba6] text-xs transition-colors cursor-pointer"
+                      >
+                        Editar
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))
@@ -397,7 +463,7 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
             className="bg-[#0e1218] max-w-md w-full p-6 border border-[#2d3748] space-y-4"
           >
             <h3 className="text-xl font-bold text-[#f1ede4] border-b border-[#1f2633] pb-3">
-              Novo Item
+              {itemEditando ? 'Editar Item' : 'Novo Item'}
             </h3>
 
             <div>
@@ -412,21 +478,51 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
               />
             </div>
 
-            <div>
-              <label className="block text-xs text-[#949ba6] mb-1">Categoria</label>
-              <select
-                required
-                value={novaCatId}
-                onChange={(e) => setNovaCatId(e.target.value)}
-                className="w-full border border-[#2d3748] bg-[#090b0f] px-3 py-2 text-sm text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
-              >
-                <option value="">Selecione...</option>
-                {categorias?.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nome}
-                  </option>
-                ))}
-              </select>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs text-[#949ba6]">Categoria</label>
+                <button
+                  type="button"
+                  onClick={() => setCriandoCategoria((v) => !v)}
+                  className="text-xs font-semibold text-[#d4a359] hover:underline cursor-pointer"
+                >
+                  {criandoCategoria ? 'Cancelar' : '+ Nova Categoria'}
+                </button>
+              </div>
+
+              {criandoCategoria ? (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Nome da nova categoria"
+                    value={nomeNovaCategoria}
+                    onChange={(e) => setNomeNovaCategoria(e.target.value)}
+                    className="min-w-0 flex-1 border border-[#2d3748] bg-[#090b0f] px-3 py-2 text-sm text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
+                  />
+                  <button
+                    type="button"
+                    disabled={!nomeNovaCategoria.trim() || criarCategoria.isPending}
+                    onClick={() => criarCategoria.mutate()}
+                    className="px-3.5 py-2 bg-[#d4a359] hover:bg-[#e0b26b] text-[#090b0f] font-semibold text-xs cursor-pointer shrink-0 disabled:opacity-50"
+                  >
+                    Criar
+                  </button>
+                </div>
+              ) : (
+                <select
+                  required
+                  value={novaCatId}
+                  onChange={(e) => setNovaCatId(e.target.value)}
+                  className="w-full border border-[#2d3748] bg-[#090b0f] px-3 py-2 text-sm text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
+                >
+                  <option value="">Selecione...</option>
+                  {categorias?.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nome}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div>
@@ -446,21 +542,39 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
               </div>
             )}
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-[#1f2633]">
-              <button
-                type="button"
-                onClick={() => setModalNovoItem(false)}
-                className="px-4 py-2 border border-[#2d3748] text-xs text-[#949ba6] hover:text-[#f1ede4] cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={criarItem.isPending}
-                className="px-5 py-2 bg-[#d4a359] hover:bg-[#e0b26b] text-[#090b0f] font-semibold text-xs cursor-pointer"
-              >
-                Salvar
-              </button>
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#1f2633]">
+              {itemEditando ? (
+                <button
+                  type="button"
+                  disabled={inativarItem.isPending}
+                  onClick={() => inativarItem.mutate(itemEditando.item.id)}
+                  className="px-3 py-2 border border-[#f87171]/40 bg-[#f87171]/10 hover:bg-[#f87171] hover:text-[#090b0f] text-xs font-semibold text-[#f87171] cursor-pointer disabled:opacity-50"
+                >
+                  Inativar item
+                </button>
+              ) : (
+                <span />
+              )}
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setItemEditando(null);
+                    setModalNovoItem(false);
+                  }}
+                  className="px-4 py-2 border border-[#2d3748] text-xs text-[#949ba6] hover:text-[#f1ede4] cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={criarItem.isPending}
+                  className="px-5 py-2 bg-[#d4a359] hover:bg-[#e0b26b] text-[#090b0f] font-semibold text-xs cursor-pointer"
+                >
+                  Salvar
+                </button>
+              </div>
             </div>
           </form>
         </div>

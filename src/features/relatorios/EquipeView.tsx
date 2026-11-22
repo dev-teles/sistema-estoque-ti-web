@@ -4,7 +4,7 @@ import { api } from '../../services/api';
 import { formatarData } from '../../utils/format';
 import type { PaginatedResponse, Role, Usuario } from '../../types/estoque';
 
-export function EquipeView() {
+export function EquipeView({ currentUserId }: { currentUserId?: number }) {
   const qc = useQueryClient();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -19,6 +19,37 @@ export function EquipeView() {
   const { data: usuarios } = useQuery({
     queryKey: ['usuarios'],
     queryFn: async () => (await api.get<PaginatedResponse<Usuario>>('/usuarios?per_page=100')).data.data,
+  });
+
+  const { data: logsAcesso } = useQuery({
+    queryKey: ['logs-acesso'],
+    queryFn: async () =>
+      (
+        await api.get<
+          PaginatedResponse<{
+            id: number;
+            evento: 'login' | 'login_falhou' | 'logout' | 'acesso_negado';
+            email?: string | null;
+            rota?: string | null;
+            ip?: string | null;
+            user?: { id: number; name: string } | null;
+            created_at: string;
+          }>
+        >('/logs-acesso?per_page=30')
+      ).data.data,
+  });
+
+  const atualizarConta = useMutation({
+    mutationFn: async ({ id, payload }: { id: number; payload: Partial<{ role: Role; ativo: boolean }> }) => {
+      await api.put(`/usuarios/${id}`, payload);
+    },
+    onSuccess: (_, { id }) => {
+      qc.invalidateQueries({ queryKey: ['usuarios'] });
+      setMsgReset({ id, texto: 'Atualizado.', ok: true });
+    },
+    onError: (err: any, { id }) => {
+      setMsgReset({ id, texto: err?.response?.data?.message || 'Erro ao atualizar.', ok: false });
+    },
   });
 
   const redefinirSenha = useMutation({
@@ -150,85 +181,172 @@ export function EquipeView() {
                 <th className="py-3 px-4">Nome</th>
                 <th className="py-3 px-4">E-mail</th>
                 <th className="py-3 px-4">Perfil</th>
+                <th className="py-3 px-4">Status</th>
                 <th className="py-3 px-4">Último Acesso</th>
                 <th className="py-3 px-4 text-right">Senha</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#1f2633]">
-              {usuarios?.map((u) => (
-                <tr key={u.id} className="hover:bg-[#141922] transition-colors">
-                  <td className="py-3.5 px-4 font-semibold text-[#f1ede4]">{u.name}</td>
-                  <td className="py-3.5 px-4 text-xs text-[#949ba6]">{u.email}</td>
-                  <td className="py-3.5 px-4">
-                    <span className="inline-block px-2.5 py-0.5 border border-[#d4a359]/40 bg-[#d4a359]/10 text-xs font-medium text-[#d4a359]">
-                      {u.role_label}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4 text-xs text-[#949ba6]">
-                    {formatarData(u.ultimo_login_em)}
-                  </td>
-                  <td className="py-3.5 px-4 text-right">
-                    {editandoId === u.id ? (
-                      <form
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          redefinirSenha.mutate({ id: u.id, password: novaSenha });
-                        }}
-                        className="flex items-center justify-end gap-1.5"
+              {usuarios?.map((u) => {
+                const ehProprio = u.id === currentUserId;
+                return (
+                  <tr key={u.id} className="hover:bg-[#141922] transition-colors">
+                    <td className="py-3.5 px-4 font-semibold text-[#f1ede4]">
+                      <span className={u.ativo ? '' : 'line-through text-[#5e6673]'}>{u.name}</span>
+                    </td>
+                    <td className="py-3.5 px-4 text-xs text-[#949ba6]">{u.email}</td>
+                    <td className="py-3.5 px-4">
+                      <select
+                        aria-label={`Perfil de ${u.name}`}
+                        disabled={ehProprio || atualizarConta.isPending}
+                        value={u.role}
+                        onChange={(e) =>
+                          atualizarConta.mutate({ id: u.id, payload: { role: e.target.value as Role } })
+                        }
+                        className="border border-[#d4a359]/40 bg-[#d4a359]/10 px-2 py-1 text-xs font-medium text-[#d4a359] focus:outline-none focus:border-[#d4a359] disabled:opacity-60"
                       >
-                        <input
-                          type="password"
-                          required
-                          minLength={8}
-                          placeholder="Nova senha (mín. 8)"
-                          value={novaSenha}
-                          onChange={(e) => setNovaSenha(e.target.value)}
-                          className="w-40 border border-[#2d3748] bg-[#090b0f] px-2.5 py-1 text-xs text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
-                        />
-                        <button
-                          type="submit"
-                          disabled={redefinirSenha.isPending}
-                          className="px-2.5 py-1 bg-[#d4a359] hover:bg-[#e0b26b] text-[#090b0f] font-semibold text-xs cursor-pointer disabled:opacity-50"
-                        >
-                          Salvar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditandoId(null);
-                            setNovaSenha('');
+                        <option value="operador" className="bg-[#090b0f] text-[#f1ede4]">
+                          Operador de TI
+                        </option>
+                        <option value="gestor" className="bg-[#090b0f] text-[#f1ede4]">
+                          Gestor de TI
+                        </option>
+                        <option value="admin" className="bg-[#090b0f] text-[#f1ede4]">
+                          Admin TI
+                        </option>
+                      </select>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <button
+                        type="button"
+                        disabled={ehProprio || atualizarConta.isPending}
+                        onClick={() => atualizarConta.mutate({ id: u.id, payload: { ativo: !u.ativo } })}
+                        className={`px-2.5 py-0.5 border text-xs font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                          u.ativo
+                            ? 'border-[#34d399]/40 bg-[#34d399]/10 text-[#34d399] hover:border-[#f87171] hover:text-[#f87171]'
+                            : 'border-[#f87171]/40 bg-[#f87171]/10 text-[#f87171] hover:border-[#34d399] hover:text-[#34d399]'
+                        }`}
+                      >
+                        {u.ativo ? 'Ativo' : 'Inativo'}
+                      </button>
+                    </td>
+                    <td className="py-3.5 px-4 text-xs text-[#949ba6]">
+                      {formatarData(u.ultimo_login_em)}
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      {editandoId === u.id ? (
+                        <form
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            redefinirSenha.mutate({ id: u.id, password: novaSenha });
                           }}
-                          className="px-2 py-1 border border-[#2d3748] bg-[#090b0f] text-xs text-[#949ba6] hover:text-[#f1ede4] cursor-pointer"
+                          className="flex items-center justify-end gap-1.5"
                         >
-                          ✕
-                        </button>
-                      </form>
-                    ) : (
-                      <div className="flex items-center justify-end gap-2">
-                        {msgReset?.id === u.id && (
-                          <span className={`text-xs ${msgReset.ok ? 'text-[#34d399]' : 'text-[#f87171]'}`}>
-                            {msgReset.texto}
-                          </span>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditandoId(u.id);
-                            setNovaSenha('');
-                            setMsgReset(null);
-                          }}
-                          className="px-2.5 py-1 border border-[#2d3748] bg-[#090b0f] hover:border-[#d4a359] hover:text-[#d4a359] text-xs text-[#949ba6] transition-colors cursor-pointer"
-                        >
-                          Redefinir senha
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                          <input
+                            type="password"
+                            required
+                            minLength={8}
+                            placeholder="Nova senha (mín. 8)"
+                            value={novaSenha}
+                            onChange={(e) => setNovaSenha(e.target.value)}
+                            className="w-40 border border-[#2d3748] bg-[#090b0f] px-2.5 py-1 text-xs text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
+                          />
+                          <button
+                            type="submit"
+                            disabled={redefinirSenha.isPending}
+                            className="px-2.5 py-1 bg-[#d4a359] hover:bg-[#e0b26b] text-[#090b0f] font-semibold text-xs cursor-pointer disabled:opacity-50"
+                          >
+                            Salvar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditandoId(null);
+                              setNovaSenha('');
+                            }}
+                            className="px-2 py-1 border border-[#2d3748] bg-[#090b0f] text-xs text-[#949ba6] hover:text-[#f1ede4] cursor-pointer"
+                          >
+                            ✕
+                          </button>
+                        </form>
+                      ) : (
+                        <div className="flex items-center justify-end gap-2">
+                          {msgReset?.id === u.id && (
+                            <span className={`text-xs ${msgReset.ok ? 'text-[#34d399]' : 'text-[#f87171]'}`}>
+                              {msgReset.texto}
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditandoId(u.id);
+                              setNovaSenha('');
+                              setMsgReset(null);
+                            }}
+                            className="px-2.5 py-1 border border-[#2d3748] bg-[#090b0f] hover:border-[#d4a359] hover:text-[#d4a359] text-xs text-[#949ba6] transition-colors cursor-pointer"
+                          >
+                            Redefinir senha
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Logs de Segurança e Acesso */}
+      <div className="bg-[#0e1218] border border-[#1f2633] overflow-x-auto">
+        <div className="px-5 py-4 border-b border-[#1f2633] flex items-center justify-between">
+          <h2 className="text-base font-bold text-[#f1ede4]">Logs Recentes de Segurança e Acesso</h2>
+          <span className="text-xs text-[#949ba6]">{logsAcesso?.length ?? 0} registros</span>
+        </div>
+
+        <table className="w-full text-left border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-[#2d3748] bg-[#090b0f] text-xs font-semibold text-[#949ba6]">
+              <th className="py-3 px-4">Data / Hora</th>
+              <th className="py-3 px-4">Evento</th>
+              <th className="py-3 px-4">Usuário / E-mail</th>
+              <th className="py-3 px-4">Rota</th>
+              <th className="py-3 px-4">IP</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#1f2633]">
+            {logsAcesso?.map((log) => {
+              const badge = {
+                login: 'border-[#34d399]/40 bg-[#34d399]/10 text-[#34d399]',
+                logout: 'border-[#2d3748] bg-[#141922] text-[#949ba6]',
+                login_falhou: 'border-[#e5a93c]/40 bg-[#e5a93c]/10 text-[#e5a93c]',
+                acesso_negado: 'border-[#f87171]/40 bg-[#f87171]/10 text-[#f87171]',
+              }[log.evento];
+              return (
+                <tr key={log.id} className="hover:bg-[#141922] transition-colors">
+                  <td className="py-3 px-4 text-xs text-[#949ba6] whitespace-nowrap">
+                    {formatarData(log.created_at)}
+                  </td>
+                  <td className="py-3 px-4">
+                    <span className={`inline-block px-2 py-0.5 border text-xs font-medium ${badge}`}>
+                      {log.evento}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4 text-xs text-[#f1ede4]">
+                    {log.user?.name || log.email || '—'}
+                  </td>
+                  <td className="py-3 px-4 text-xs text-[#949ba6] font-mono">
+                    {log.rota || '—'}
+                  </td>
+                  <td className="py-3 px-4 text-xs text-[#949ba6] font-mono">
+                    {log.ip || '—'}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );
