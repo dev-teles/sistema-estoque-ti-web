@@ -1,15 +1,8 @@
 ﻿import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '../../services/api';
+import { api, buscarTarefaAuvo } from '../../services/api';
 import { formatarData } from '../../utils/format';
 import type { ItemCatalogo, PaginatedResponse, Reserva } from '../../types/estoque';
-
-interface AuvoTarefa {
-  task_id: number;
-  solicitante: string;
-  orientacao?: string | null;
-  modo_demo?: boolean;
-}
 
 export function ReservasView() {
   const qc = useQueryClient();
@@ -35,24 +28,18 @@ export function ReservasView() {
   });
 
   const buscarNoAuvo = async () => {
-    const idLimpo = taskIdAuvo.replace(/\D/g, '');
-    if (!idLimpo) {
-      setErro('Informe o nº da tarefa.');
-      return;
-    }
     setErro('');
     setAvisoAuvo('');
     setBuscandoAuvo(true);
     try {
-      const res = await api.get<{ data: AuvoTarefa }>(`/auvo/tarefas/${idLimpo}`);
-      const tarefa = res.data.data;
+      const tarefa = await buscarTarefaAuvo(taskIdAuvo);
       setSolicitante(tarefa.solicitante);
       if (tarefa.orientacao) {
         setObservacao(tarefa.orientacao);
       }
       setAvisoAuvo(`Tarefa #${tarefa.task_id} importada.`);
     } catch (err: any) {
-      setErro(err?.response?.data?.message || 'Tarefa não encontrada.');
+      setErro(err?.response?.data?.message || err?.message || 'Tarefa não encontrada.');
     } finally {
       setBuscandoAuvo(false);
     }
@@ -91,7 +78,9 @@ export function ReservasView() {
       qc.invalidateQueries({ queryKey: ['estoque'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
       qc.invalidateQueries({ queryKey: ['movimentacoes'] });
+      setErro('');
     },
+    onError: (err: any) => setErro(err?.response?.data?.message || 'Erro ao processar reserva.'),
   });
 
   return (
@@ -231,15 +220,17 @@ export function ReservasView() {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
+                      disabled={acaoReserva.isPending}
                       onClick={() => acaoReserva.mutate({ id: r.id, acao: 'confirmar' })}
-                      className="px-3.5 py-1.5 border border-[#34d399]/40 bg-[#34d399]/10 hover:bg-[#34d399] hover:text-[#090b0f] text-[#34d399] text-xs font-semibold transition-colors cursor-pointer"
+                      className="px-3.5 py-1.5 border border-[#34d399]/40 bg-[#34d399]/10 hover:bg-[#34d399] hover:text-[#090b0f] text-[#34d399] text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
                     >
                       Entregar
                     </button>
                     <button
                       type="button"
+                      disabled={acaoReserva.isPending}
                       onClick={() => acaoReserva.mutate({ id: r.id, acao: 'cancelar' })}
-                      className="px-3 py-1.5 border border-[#2d3748] bg-[#090b0f] hover:border-[#f87171] hover:text-[#f87171] text-xs text-[#949ba6] transition-colors cursor-pointer"
+                      className="px-3 py-1.5 border border-[#2d3748] bg-[#090b0f] hover:border-[#f87171] hover:text-[#f87171] text-xs text-[#949ba6] transition-colors cursor-pointer disabled:opacity-50"
                     >
                       Cancelar
                     </button>

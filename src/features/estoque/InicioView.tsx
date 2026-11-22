@@ -1,7 +1,6 @@
 ﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
-import { formatarData } from '../../utils/format';
-import { TIPO_LABEL } from '../../components/ui/StatusBadge';
+import { formatarData, TIPO_LABEL } from '../../utils/format';
 import type { Movimentacao, Reserva } from '../../types/estoque';
 import type { Aba } from '../../types/navigation';
 

@@ -18,7 +18,7 @@ export function EquipeView() {
 
   const { data: usuarios } = useQuery({
     queryKey: ['usuarios'],
-    queryFn: async () => (await api.get<PaginatedResponse<Usuario>>('/usuarios')).data.data,
+    queryFn: async () => (await api.get<PaginatedResponse<Usuario>>('/usuarios?per_page=100')).data.data,
   });
 
   const redefinirSenha = useMutation({

@@ -24,3 +24,19 @@ api.interceptors.response.use(
     return Promise.reject(err);
   },
 );
+
+export interface AuvoTarefa {
+  task_id: number;
+  solicitante: string;
+  orientacao?: string | null;
+  modo_demo?: boolean;
+}
+
+export async function buscarTarefaAuvo(rawId: string): Promise<AuvoTarefa> {
+  const idLimpo = rawId.replace(/\D/g, '');
+  if (!idLimpo) {
+    throw new Error('Informe o nº da tarefa.');
+  }
+  const res = await api.get<{ data: AuvoTarefa }>(`/auvo/tarefas/${idLimpo}`);
+  return res.data.data;
+}

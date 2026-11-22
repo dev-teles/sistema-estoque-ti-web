@@ -1,8 +1,7 @@
 ﻿import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../services/api';
-import { formatarData } from '../../utils/format';
-import { TIPO_LABEL } from '../../components/ui/StatusBadge';
+import { formatarData, TIPO_LABEL } from '../../utils/format';
 import type { Movimentacao, PaginatedResponse } from '../../types/estoque';
 
 export function HistoricoView() {
@@ -32,6 +31,9 @@ export function HistoricoView() {
           <option value="entrada">Entradas</option>
           <option value="saida">Saídas</option>
           <option value="reserva">Reservas</option>
+          <option value="cancelamento_reserva">Canceladas</option>
+          <option value="estorno">Ajustes / Estornos</option>
+          <option value="ajuste_auditoria">Auditorias</option>
         </select>
       </div>
 

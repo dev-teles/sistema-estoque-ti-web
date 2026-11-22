@@ -7,6 +7,14 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
+    headers: {
+      'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+      'X-XSS-Protection': '0',
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
+      'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+    },
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:8000',

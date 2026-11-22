@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '../../services/api';
+import { api, buscarTarefaAuvo } from '../../services/api';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import type { Categoria, PaginatedResponse, UnidadeEstoque } from '../../types/estoque';
 
@@ -26,6 +26,7 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
   const [novoNome, setNovoNome] = useState('');
   const [novaCatId, setNovaCatId] = useState('');
   const [novoMinimo, setNovoMinimo] = useState(5);
+  const [erroNovoItem, setErroNovoItem] = useState('');
 
   const { data: categorias } = useQuery({
     queryKey: ['categorias'],
@@ -47,18 +48,15 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
       ).data,
   });
 
-  const buscarTarefaAuvo = async () => {
-    const idLimpo = taskIdAuvo.replace(/\D/g, '');
-    if (!idLimpo) return;
+  const handleBuscarAuvo = async () => {
+    if (!taskIdAuvo.replace(/\D/g, '')) return;
     setBuscandoAuvo(true);
     setMsgErro('');
     try {
-      const res = await api.get<{
-        data: { solicitante: string; orientacao?: string | null };
-      }>(`/auvo/tarefas/${idLimpo}`);
-      setDestino(res.data.data.solicitante);
-      if (res.data.data.orientacao) {
-        setJustificativa(res.data.data.orientacao);
+      const tarefa = await buscarTarefaAuvo(taskIdAuvo);
+      setDestino(tarefa.solicitante);
+      if (tarefa.orientacao) {
+        setJustificativa(tarefa.orientacao);
       }
     } catch (err: any) {
       setMsgErro(err?.response?.data?.message || 'Tarefa não encontrada no Auvo.');
@@ -118,7 +116,11 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
       qc.invalidateQueries({ queryKey: ['catalogo-simples'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
       setNovoNome('');
+      setErroNovoItem('');
       setModalNovoItem(false);
+    },
+    onError: (err: any) => {
+      setErroNovoItem(err?.response?.data?.message || 'Erro ao criar item.');
     },
   });
 
@@ -130,7 +132,10 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
         {podeGerir && (
           <button
             type="button"
-            onClick={() => setModalNovoItem(true)}
+            onClick={() => {
+              setErroNovoItem('');
+              setModalNovoItem(true);
+            }}
             className="px-4 py-2 bg-[#d4a359] hover:bg-[#e0b26b] text-[#090b0f] font-semibold text-xs cursor-pointer transition-colors"
           >
             + Novo Item
@@ -288,7 +293,7 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
                   />
                   <button
                     type="button"
-                    onClick={buscarTarefaAuvo}
+                    onClick={handleBuscarAuvo}
                     disabled={buscandoAuvo}
                     className="px-3 py-1.5 bg-[#d4a359] hover:bg-[#e0b26b] text-[#090b0f] font-semibold text-xs cursor-pointer shrink-0 disabled:opacity-50"
                   >
@@ -324,12 +329,15 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-[#949ba6] mb-1">Destinatário</label>
+                  <label className="block text-xs text-[#949ba6] mb-1">
+                    Destinatário {motivo === 'transferencia' ? '*' : ''}
+                  </label>
                   <input
                     type="text"
+                    required={motivo === 'transferencia'}
                     value={destino}
                     onChange={(e) => setDestino(e.target.value)}
-                    placeholder="Nome ou setor"
+                    placeholder={motivo === 'transferencia' ? 'Obrigatório na transferência' : 'Nome ou setor'}
                     className="w-full border border-[#2d3748] bg-[#090b0f] px-3 py-2 text-sm text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
                   />
                 </div>
@@ -337,12 +345,19 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
             )}
 
             <div>
-              <label className="block text-xs text-[#949ba6] mb-1">Observação</label>
+              <label className="block text-xs text-[#949ba6] mb-1">
+                Observação {itemAcao.tipo === 'saida' && motivo === 'dano' ? '*' : ''}
+              </label>
               <input
                 type="text"
+                required={itemAcao.tipo === 'saida' && motivo === 'dano'}
                 value={justificativa}
                 onChange={(e) => setJustificativa(e.target.value)}
-                placeholder="Opcional"
+                placeholder={
+                  itemAcao.tipo === 'saida' && motivo === 'dano'
+                    ? 'Obrigatório para defeito/descarte'
+                    : 'Opcional'
+                }
                 className="w-full border border-[#2d3748] bg-[#090b0f] px-3 py-2 text-sm text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
               />
             </div>
@@ -424,6 +439,12 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
                 className="w-full border border-[#2d3748] bg-[#090b0f] px-3 py-2 text-sm text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
               />
             </div>
+
+            {erroNovoItem && (
+              <div className="border-l-2 border-[#f87171] bg-[#f87171]/10 px-3 py-2 text-xs text-[#f87171]">
+                {erroNovoItem}
+              </div>
+            )}
 
             <div className="flex justify-end gap-2 pt-2 border-t border-[#1f2633]">
               <button

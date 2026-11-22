@@ -85,28 +85,6 @@ export interface Reserva {
   created_at: string;
 }
 
-export interface Fornecedor {
-  id: number;
-  nome: string;
-  cnpj: string;
-  contato_nome?: string | null;
-  email?: string | null;
-  telefone?: string | null;
-}
-
-export interface NotaFiscal {
-  id: number;
-  numero: string;
-  serie: string;
-  data_emissao: string;
-  valor_total?: string | null;
-  observacao?: string | null;
-  fornecedor?: { id: number; nome: string; cnpj: string };
-  registrada_por?: { id: number; name: string };
-  itens_count?: number;
-  created_at: string;
-}
-
 export interface PaginatedResponse<T> {
   data: T[];
   meta: {
