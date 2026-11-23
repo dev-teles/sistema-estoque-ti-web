@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, buscarTarefaAuvo } from '../../services/api';
 import { StatusBadge } from '../../components/ui/StatusBadge';
+import { formatarVinculoDestino, listarSetores, registrarSetor } from '../../utils/alocacao';
 import type { Categoria, PaginatedResponse, UnidadeEstoque } from '../../types/estoque';
 
 export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
@@ -18,7 +19,8 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
   const [motivo, setMotivo] = useState<'consumo' | 'transferencia' | 'dano'>('consumo');
   const [taskIdAuvo, setTaskIdAuvo] = useState('');
   const [buscandoAuvo, setBuscandoAuvo] = useState(false);
-  const [destino, setDestino] = useState('');
+  const [setorDestino, setSetorDestino] = useState('');
+  const [pessoaDestino, setPessoaDestino] = useState('');
   const [justificativa, setJustificativa] = useState('');
   const [msgErro, setMsgErro] = useState('');
 
@@ -36,7 +38,8 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
     setQuantidade(1);
     setMotivo('consumo');
     setTaskIdAuvo('');
-    setDestino('');
+    setSetorDestino('');
+    setPessoaDestino('');
     setJustificativa('');
     setMsgErro('');
   };
@@ -97,7 +100,7 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
     setMsgErro('');
     try {
       const tarefa = await buscarTarefaAuvo(taskIdAuvo);
-      setDestino(tarefa.solicitante);
+      setPessoaDestino(tarefa.solicitante);
       if (tarefa.orientacao) {
         setJustificativa(tarefa.orientacao);
       }
@@ -119,11 +122,18 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
           justificativa: justificativa || undefined,
         });
       } else {
+        const destinoFormatado = formatarVinculoDestino(setorDestino, pessoaDestino);
+        if (motivo === 'transferencia' && !destinoFormatado) {
+          throw new Error('Informe ao menos o Setor (ou Pessoa) para a transferência.');
+        }
+        if (setorDestino.trim()) {
+          registrarSetor(setorDestino);
+        }
         await api.post('/estoque/saida', {
           item_id,
           quantidade,
           motivo,
-          destino: destino || undefined,
+          destino: destinoFormatado || undefined,
           justificativa: justificativa || undefined,
         });
       }
@@ -135,12 +145,13 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
       setItemAcao(null);
       setQuantidade(1);
       setTaskIdAuvo('');
-      setDestino('');
+      setSetorDestino('');
+      setPessoaDestino('');
       setJustificativa('');
       setMsgErro('');
     },
     onError: (err: any) => {
-      setMsgErro(err?.response?.data?.message || 'Erro ao salvar.');
+      setMsgErro(err?.response?.data?.message || err?.message || 'Erro ao salvar.');
     },
   });
 
@@ -394,18 +405,53 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
                     <option value="dano">Defeito / Descarte</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-xs text-[#949ba6] mb-1">
-                    Destinatário {motivo === 'transferencia' ? '*' : ''}
-                  </label>
-                  <input
-                    type="text"
-                    required={motivo === 'transferencia'}
-                    value={destino}
-                    onChange={(e) => setDestino(e.target.value)}
-                    placeholder={motivo === 'transferencia' ? 'Obrigatório na transferência' : 'Nome ou setor'}
-                    className="w-full border border-[#2d3748] bg-[#090b0f] px-3 py-2 text-sm text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
-                  />
+                <div className="p-3 bg-[#090b0f] border border-[#1f2633] space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-[#d4a359]">
+                      Vincular a Setor / Pessoa {motivo === 'transferencia' ? '*' : ''}
+                    </span>
+                    <span className="text-[11px] text-[#5e6673]">
+                      Setor + Pessoa ou só Setor
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] text-[#949ba6] mb-1">
+                      Setor {motivo === 'transferencia' && !pessoaDestino.trim() ? '*' : ''}
+                    </label>
+                    <input
+                      type="text"
+                      list="setores-estoque-list"
+                      value={setorDestino}
+                      onChange={(e) => setSetorDestino(e.target.value)}
+                      placeholder="Ex: Financeiro, RH, Recepção, TI..."
+                      className="w-full border border-[#2d3748] bg-[#0e1218] px-3 py-2 text-xs text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
+                    />
+                    <datalist id="setores-estoque-list">
+                      {listarSetores().map((s) => (
+                        <option key={s} value={s} />
+                      ))}
+                    </datalist>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] text-[#949ba6] mb-1">
+                      Pessoa <span className="text-[#5e6673]">(opcional — deixe vazio para atrelar só ao setor)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={pessoaDestino}
+                      onChange={(e) => setPessoaDestino(e.target.value)}
+                      placeholder="Nome do colaborador (opcional)"
+                      className="w-full border border-[#2d3748] bg-[#0e1218] px-3 py-2 text-xs text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
+                    />
+                  </div>
+
+                  {formatarVinculoDestino(setorDestino, pessoaDestino) && (
+                    <p className="text-[11px] text-[#34d399]">
+                      Registro: {formatarVinculoDestino(setorDestino, pessoaDestino)}
+                    </p>
+                  )}
                 </div>
               </>
             )}

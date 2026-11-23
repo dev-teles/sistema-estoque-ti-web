@@ -66,6 +66,7 @@ export function HistoricoView({
 }) {
   const qc = useQueryClient();
   const [tipo, setTipo] = useState('');
+  const [buscaDestino, setBuscaDestino] = useState('');
   const [mesFechamento, setMesFechamento] = useState(() => new Date().toISOString().slice(0, 7));
   const [estornandoId, setEstornandoId] = useState<number | null>(null);
   const [justificativaEstorno, setJustificativaEstorno] = useState('');
@@ -391,6 +392,15 @@ export function HistoricoView({
             </>
           )}
 
+          <input
+            type="search"
+            aria-label="Filtrar por setor, pessoa ou item"
+            placeholder="Filtrar por setor, pessoa ou item..."
+            value={buscaDestino}
+            onChange={(e) => setBuscaDestino(e.target.value)}
+            className="border border-[#2d3748] bg-[#0e1218] px-3.5 py-2 text-sm text-[#f1ede4] placeholder:text-[#5e6673] focus:outline-none focus:border-[#d4a359] w-60"
+          />
+
           <select
             aria-label="Filtrar por tipo"
             value={tipo}
@@ -429,7 +439,18 @@ export function HistoricoView({
             </tr>
           </thead>
           <tbody className="divide-y divide-[#1f2633]">
-            {data?.map((m) => {
+            {data
+              ?.filter((m) => {
+                const termo = buscaDestino.trim().toLowerCase();
+                if (!termo) return true;
+                return (
+                  (m.item?.nome ?? '').toLowerCase().includes(termo) ||
+                  (m.destino ?? '').toLowerCase().includes(termo) ||
+                  (m.justificativa ?? '').toLowerCase().includes(termo) ||
+                  (m.user?.name ?? '').toLowerCase().includes(termo)
+                );
+              })
+              .map((m) => {
               const info = TIPO_LABEL[m.tipo] ?? {
                 texto: m.tipo,
                 cor: 'border-[#2d3748] bg-[#141922] text-[#949ba6]',

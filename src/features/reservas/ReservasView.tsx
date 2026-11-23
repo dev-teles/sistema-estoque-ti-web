@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, buscarTarefaAuvo } from '../../services/api';
 import { formatarData } from '../../utils/format';
+import { formatarVinculoDestino, listarSetores, registrarSetor } from '../../utils/alocacao';
 import type { ItemCatalogo, PaginatedResponse, Reserva } from '../../types/estoque';
 
 export function ReservasView() {
@@ -9,7 +10,8 @@ export function ReservasView() {
   const [itemId, setItemId] = useState('');
   const [quantidade, setQuantidade] = useState(1);
   const [taskIdAuvo, setTaskIdAuvo] = useState('');
-  const [solicitante, setSolicitante] = useState('');
+  const [setor, setSetor] = useState('');
+  const [pessoa, setPessoa] = useState('');
   const [observacao, setObservacao] = useState('');
   const [buscandoAuvo, setBuscandoAuvo] = useState(false);
   const [avisoAuvo, setAvisoAuvo] = useState('');
@@ -33,7 +35,7 @@ export function ReservasView() {
     setBuscandoAuvo(true);
     try {
       const tarefa = await buscarTarefaAuvo(taskIdAuvo);
-      setSolicitante(tarefa.solicitante);
+      setPessoa(tarefa.solicitante);
       if (tarefa.orientacao) {
         setObservacao(tarefa.orientacao);
       }
@@ -48,10 +50,17 @@ export function ReservasView() {
   const criarReserva = useMutation({
     mutationFn: async (e: React.FormEvent) => {
       e.preventDefault();
+      const solicitanteFormatado = formatarVinculoDestino(setor, pessoa);
+      if (!solicitanteFormatado) {
+        throw new Error('Informe ao menos o Setor (ou a Pessoa).');
+      }
+      if (setor.trim()) {
+        registrarSetor(setor);
+      }
       await api.post('/reservas', {
         item_id: Number(itemId),
         quantidade,
-        solicitante,
+        solicitante: solicitanteFormatado,
         observacao: observacao || undefined,
       });
     },
@@ -59,14 +68,15 @@ export function ReservasView() {
       qc.invalidateQueries({ queryKey: ['reservas'] });
       qc.invalidateQueries({ queryKey: ['estoque'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
-      setSolicitante('');
+      setSetor('');
+      setPessoa('');
       setObservacao('');
       setTaskIdAuvo('');
       setAvisoAuvo('');
       setQuantidade(1);
       setErro('');
     },
-    onError: (err: any) => setErro(err?.response?.data?.message || 'Erro ao reservar.'),
+    onError: (err: any) => setErro(err?.response?.data?.message || err?.message || 'Erro ao reservar.'),
   });
 
   const acaoReserva = useMutation({
@@ -137,30 +147,61 @@ export function ReservasView() {
             </select>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            <div className="col-span-2">
-              <label className="block text-xs text-[#949ba6] mb-1">Solicitante</label>
-              <input
-                type="text"
-                required
-                placeholder="Nome"
-                value={solicitante}
-                onChange={(e) => setSolicitante(e.target.value)}
-                className="w-full border border-[#2d3748] bg-[#090b0f] px-3 py-2 text-sm text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
-              />
+          <div className="p-3 bg-[#090b0f] border border-[#1f2633] space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-[#d4a359]">Vínculo (Setor / Pessoa)</span>
+              <span className="text-[11px] text-[#5e6673]">Setor + Pessoa ou só Setor</span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="col-span-2">
+                <label className="block text-[11px] text-[#949ba6] mb-1">Setor</label>
+                <input
+                  type="text"
+                  list="setores-reservas-list"
+                  placeholder="Ex: Financeiro, RH, TI..."
+                  value={setor}
+                  onChange={(e) => setSetor(e.target.value)}
+                  className="w-full border border-[#2d3748] bg-[#0e1218] px-3 py-2 text-xs text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
+                />
+                <datalist id="setores-reservas-list">
+                  {listarSetores().map((s) => (
+                    <option key={s} value={s} />
+                  ))}
+                </datalist>
+              </div>
+
+              <div>
+                <label className="block text-[11px] text-[#949ba6] mb-1">Qtd.</label>
+                <input
+                  type="number"
+                  min={1}
+                  required
+                  value={quantidade}
+                  onChange={(e) => setQuantidade(Number(e.target.value))}
+                  className="w-full border border-[#2d3748] bg-[#0e1218] px-3 py-2 text-xs text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
+                />
+              </div>
             </div>
 
             <div>
-              <label className="block text-xs text-[#949ba6] mb-1">Qtd.</label>
+              <label className="block text-[11px] text-[#949ba6] mb-1">
+                Pessoa <span className="text-[#5e6673]">(opcional — deixe vazio para atrelar só ao setor)</span>
+              </label>
               <input
-                type="number"
-                min={1}
-                required
-                value={quantidade}
-                onChange={(e) => setQuantidade(Number(e.target.value))}
-                className="w-full border border-[#2d3748] bg-[#090b0f] px-3 py-2 text-sm text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
+                type="text"
+                placeholder="Nome do colaborador (opcional)"
+                value={pessoa}
+                onChange={(e) => setPessoa(e.target.value)}
+                className="w-full border border-[#2d3748] bg-[#0e1218] px-3 py-2 text-xs text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
               />
             </div>
+
+            {formatarVinculoDestino(setor, pessoa) && (
+              <p className="text-[11px] text-[#34d399]">
+                Registro: {formatarVinculoDestino(setor, pessoa)}
+              </p>
+            )}
           </div>
 
           <div>
