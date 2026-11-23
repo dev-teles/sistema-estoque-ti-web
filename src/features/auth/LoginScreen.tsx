@@ -5,8 +5,8 @@ interface LoginScreenProps {
 }
 
 export function LoginScreen({ onLogin }: LoginScreenProps) {
-  const [email, setEmail] = useState('admin@estoque.local');
-  const [password, setPassword] = useState('password');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [website, setWebsite] = useState('');
   const [erro, setErro] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -90,36 +90,6 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
             {submitting ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
-
-        <div className="mt-6 pt-5 border-t border-[#1f2633]">
-          <p className="text-xs text-[#5e6673] mb-2.5">Acesso rápido:</p>
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              { label: 'Admin', email: 'admin@estoque.local' },
-              { label: 'Gestor', email: 'gestor.ti@estoque.local' },
-              { label: 'Operador', email: 'operador.ti@estoque.local' },
-            ].map((c) => {
-              const selecionado = email === c.email;
-              return (
-                <button
-                  key={c.email}
-                  type="button"
-                  onClick={() => {
-                    setEmail(c.email);
-                    setPassword('password');
-                  }}
-                  className={`py-2 px-2 border text-xs font-medium transition-colors cursor-pointer ${
-                    selecionado
-                      ? 'border-[#d4a359] bg-[#d4a359]/10 text-[#f1ede4]'
-                      : 'border-[#1f2633] bg-[#090b0f] text-[#949ba6] hover:border-[#2d3748]'
-                  }`}
-                >
-                  {c.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
       </div>
     </div>
   );

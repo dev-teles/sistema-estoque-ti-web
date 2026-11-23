@@ -41,7 +41,7 @@ export default function App() {
         {aba === 'inicio' && <InicioView onNavigate={setAba} />}
         {aba === 'estoque' && <EstoqueView podeGerir={podeGerir} />}
         {aba === 'reservas' && <ReservasView />}
-        {aba === 'historico' && <HistoricoView podeGerir={podeGerir} />}
+        {aba === 'historico' && <HistoricoView podeGerir={podeGerir} ehAdmin={ehAdmin} />}
         {aba === 'equipe' && ehAdmin && <EquipeView currentUserId={user.id} />}
       </main>
     </div>

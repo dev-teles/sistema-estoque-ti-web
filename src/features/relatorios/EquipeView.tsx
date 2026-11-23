@@ -12,9 +12,18 @@ export function EquipeView({ currentUserId }: { currentUserId?: number }) {
   const [role, setRole] = useState<Role>('operador');
   const [erro, setErro] = useState('');
   const [sucesso, setSucesso] = useState('');
-  const [editandoId, setEditandoId] = useState<number | null>(null);
-  const [novaSenha, setNovaSenha] = useState('');
   const [msgReset, setMsgReset] = useState<{ id: number; texto: string; ok: boolean } | null>(null);
+
+  // Modal de Edição de Usuário
+  const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editRole, setEditRole] = useState<Role>('operador');
+  const [editPassword, setEditPassword] = useState('');
+  const [erroEdicao, setErroEdicao] = useState('');
+
+  // Modal de Confirmação Ativo / Inativo
+  const [usuarioConfirmandoStatus, setUsuarioConfirmandoStatus] = useState<Usuario | null>(null);
 
   const { data: usuarios } = useQuery({
     queryKey: ['usuarios'],
@@ -40,31 +49,58 @@ export function EquipeView({ currentUserId }: { currentUserId?: number }) {
   });
 
   const atualizarConta = useMutation({
-    mutationFn: async ({ id, payload }: { id: number; payload: Partial<{ role: Role; ativo: boolean }> }) => {
+    mutationFn: async ({
+      id,
+      payload,
+    }: {
+      id: number;
+      payload: Partial<{ name: string; email: string; password: string; role: Role; ativo: boolean }>;
+    }) => {
       await api.put(`/usuarios/${id}`, payload);
     },
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: ['usuarios'] });
+      setUsuarioConfirmandoStatus(null);
       setMsgReset({ id, texto: 'Atualizado.', ok: true });
     },
     onError: (err: any, { id }) => {
-      setMsgReset({ id, texto: err?.response?.data?.message || 'Erro ao atualizar.', ok: false });
+      setUsuarioConfirmandoStatus(null);
+      const errors = err?.response?.data?.errors;
+      const firstError = errors ? (Object.values(errors).flat()[0] as string) : null;
+      setMsgReset({
+        id,
+        texto: firstError || err?.response?.data?.message || 'Erro ao atualizar.',
+        ok: false,
+      });
     },
   });
 
-  const redefinirSenha = useMutation({
-    mutationFn: async ({ id, password }: { id: number; password: string }) => {
-      await api.put(`/usuarios/${id}`, { password });
+  const salvarEdicaoUsuario = useMutation({
+    mutationFn: async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!usuarioEditando) return;
+      const payload: Record<string, any> = {
+        name: editName.trim(),
+        email: editEmail.trim(),
+        role: editRole,
+      };
+      if (editPassword.trim() !== '') {
+        payload.password = editPassword;
+      }
+      await api.put(`/usuarios/${usuarioEditando.id}`, payload);
     },
-    onSuccess: (_, { id }) => {
-      setEditandoId(null);
-      setNovaSenha('');
-      setMsgReset({ id, texto: 'Senha atualizada.', ok: true });
+    onSuccess: () => {
+      const id = usuarioEditando?.id ?? 0;
+      qc.invalidateQueries({ queryKey: ['usuarios'] });
+      setUsuarioEditando(null);
+      setEditPassword('');
+      setErroEdicao('');
+      setMsgReset({ id, texto: 'Dados salvos.', ok: true });
     },
-    onError: (err: any, { id }) => {
+    onError: (err: any) => {
       const errors = err?.response?.data?.errors;
       const firstError = errors ? (Object.values(errors).flat()[0] as string) : null;
-      setMsgReset({ id, texto: firstError || 'Erro ao redefinir (mín. 8 caracteres).', ok: false });
+      setErroEdicao(firstError || err?.response?.data?.message || 'Erro ao salvar alterações.');
     },
   });
 
@@ -89,6 +125,16 @@ export function EquipeView({ currentUserId }: { currentUserId?: number }) {
       setErro(firstError || err?.response?.data?.message || 'Erro ao criar conta.');
     },
   });
+
+  const abrirModalEdicao = (u: Usuario) => {
+    setUsuarioEditando(u);
+    setEditName(u.name);
+    setEditEmail(u.email);
+    setEditRole(u.role);
+    setEditPassword('');
+    setErroEdicao('');
+    setMsgReset(null);
+  };
 
   return (
     <div className="space-y-6">
@@ -120,7 +166,7 @@ export function EquipeView({ currentUserId }: { currentUserId?: number }) {
             <input
               type="email"
               required
-              placeholder="lucas.ti@estoque.local"
+              placeholder="usuario@gruporiomais.com.br"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full border border-[#2d3748] bg-[#090b0f] px-3 py-2 text-sm text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
@@ -183,7 +229,7 @@ export function EquipeView({ currentUserId }: { currentUserId?: number }) {
                 <th className="py-3 px-4">Perfil</th>
                 <th className="py-3 px-4">Status</th>
                 <th className="py-3 px-4">Último Acesso</th>
-                <th className="py-3 px-4 text-right">Senha</th>
+                <th className="py-3 px-4 text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#1f2633]">
@@ -220,7 +266,7 @@ export function EquipeView({ currentUserId }: { currentUserId?: number }) {
                       <button
                         type="button"
                         disabled={ehProprio || atualizarConta.isPending}
-                        onClick={() => atualizarConta.mutate({ id: u.id, payload: { ativo: !u.ativo } })}
+                        onClick={() => setUsuarioConfirmandoStatus(u)}
                         className={`px-2.5 py-0.5 border text-xs font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                           u.ativo
                             ? 'border-[#34d399]/40 bg-[#34d399]/10 text-[#34d399] hover:border-[#f87171] hover:text-[#f87171]'
@@ -234,61 +280,20 @@ export function EquipeView({ currentUserId }: { currentUserId?: number }) {
                       {formatarData(u.ultimo_login_em)}
                     </td>
                     <td className="py-3.5 px-4 text-right">
-                      {editandoId === u.id ? (
-                        <form
-                          onSubmit={(e) => {
-                            e.preventDefault();
-                            redefinirSenha.mutate({ id: u.id, password: novaSenha });
-                          }}
-                          className="flex items-center justify-end gap-1.5"
+                      <div className="flex items-center justify-end gap-2">
+                        {msgReset?.id === u.id && (
+                          <span className={`text-xs ${msgReset.ok ? 'text-[#34d399]' : 'text-[#f87171]'}`}>
+                            {msgReset.texto}
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => abrirModalEdicao(u)}
+                          className="px-2.5 py-1 border border-[#2d3748] bg-[#090b0f] hover:border-[#d4a359] hover:text-[#d4a359] text-xs text-[#f1ede4] transition-colors cursor-pointer"
                         >
-                          <input
-                            type="password"
-                            required
-                            minLength={8}
-                            placeholder="Nova senha (mín. 8)"
-                            value={novaSenha}
-                            onChange={(e) => setNovaSenha(e.target.value)}
-                            className="w-40 border border-[#2d3748] bg-[#090b0f] px-2.5 py-1 text-xs text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
-                          />
-                          <button
-                            type="submit"
-                            disabled={redefinirSenha.isPending}
-                            className="px-2.5 py-1 bg-[#d4a359] hover:bg-[#e0b26b] text-[#090b0f] font-semibold text-xs cursor-pointer disabled:opacity-50"
-                          >
-                            Salvar
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditandoId(null);
-                              setNovaSenha('');
-                            }}
-                            className="px-2 py-1 border border-[#2d3748] bg-[#090b0f] text-xs text-[#949ba6] hover:text-[#f1ede4] cursor-pointer"
-                          >
-                            ✕
-                          </button>
-                        </form>
-                      ) : (
-                        <div className="flex items-center justify-end gap-2">
-                          {msgReset?.id === u.id && (
-                            <span className={`text-xs ${msgReset.ok ? 'text-[#34d399]' : 'text-[#f87171]'}`}>
-                              {msgReset.texto}
-                            </span>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditandoId(u.id);
-                              setNovaSenha('');
-                              setMsgReset(null);
-                            }}
-                            className="px-2.5 py-1 border border-[#2d3748] bg-[#090b0f] hover:border-[#d4a359] hover:text-[#d4a359] text-xs text-[#949ba6] transition-colors cursor-pointer"
-                          >
-                            Redefinir senha
-                          </button>
-                        </div>
-                      )}
+                          Editar
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -348,6 +353,172 @@ export function EquipeView({ currentUserId }: { currentUserId?: number }) {
           </tbody>
         </table>
       </div>
+
+      {/* Modal: Editar Usuário da Equipe */}
+      {usuarioEditando && (
+        <div className="fixed inset-0 z-50 bg-[#090b0f]/85 backdrop-blur-xs flex items-center justify-center p-4">
+          <form
+            onSubmit={(e) => salvarEdicaoUsuario.mutate(e)}
+            className="bg-[#0e1218] max-w-md w-full p-6 border border-[#2d3748] space-y-4"
+          >
+            <div className="flex items-center justify-between border-b border-[#1f2633] pb-3">
+              <h3 className="text-lg font-bold text-[#f1ede4]">
+                Editar Usuário da Equipe
+              </h3>
+              <button
+                type="button"
+                onClick={() => setUsuarioEditando(null)}
+                className="px-2 py-0.5 border border-[#2d3748] text-xs text-[#949ba6] hover:text-[#f1ede4] cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div>
+              <label className="block text-xs text-[#949ba6] mb-1">Nome completo</label>
+              <input
+                type="text"
+                required
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="w-full border border-[#2d3748] bg-[#090b0f] px-3 py-2 text-sm text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs text-[#949ba6] mb-1">E-mail</label>
+              <input
+                type="email"
+                required
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                className="w-full border border-[#2d3748] bg-[#090b0f] px-3 py-2 text-sm text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs text-[#949ba6] mb-1">Perfil de Acesso</label>
+              <select
+                value={editRole}
+                disabled={usuarioEditando.id === currentUserId}
+                onChange={(e) => setEditRole(e.target.value as Role)}
+                className="w-full border border-[#2d3748] bg-[#090b0f] px-3 py-2 text-sm text-[#f1ede4] focus:outline-none focus:border-[#d4a359] disabled:opacity-60"
+              >
+                <option value="operador">Operador de Suporte</option>
+                <option value="gestor">Gestor de TI</option>
+                <option value="admin">Administrador</option>
+              </select>
+              {usuarioEditando.id === currentUserId && (
+                <p className="text-[11px] text-[#5e6673] mt-1">
+                  O seu próprio perfil de Administrador não pode ser rebaixado.
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs text-[#949ba6] mb-1">
+                Nova senha <span className="text-[#5e6673]">(opcional — deixe em branco para manter a atual)</span>
+              </label>
+              <input
+                type="password"
+                minLength={8}
+                placeholder="Mínimo de 8 caracteres"
+                value={editPassword}
+                onChange={(e) => setEditPassword(e.target.value)}
+                className="w-full border border-[#2d3748] bg-[#090b0f] px-3 py-2 text-sm text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
+              />
+            </div>
+
+            {erroEdicao && (
+              <div className="border-l-2 border-[#f87171] bg-[#f87171]/10 px-3 py-2 text-xs text-[#f87171]">
+                {erroEdicao}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-[#1f2633]">
+              <button
+                type="button"
+                onClick={() => setUsuarioEditando(null)}
+                className="px-4 py-2 border border-[#2d3748] text-xs text-[#949ba6] hover:text-[#f1ede4] cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={salvarEdicaoUsuario.isPending}
+                className="px-5 py-2 bg-[#d4a359] hover:bg-[#e0b26b] text-[#090b0f] font-semibold text-xs cursor-pointer disabled:opacity-50"
+              >
+                {salvarEdicaoUsuario.isPending ? 'Salvando...' : 'Salvar Alterações'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Modal: Confirmação para Ativar / Desativar Usuário */}
+      {usuarioConfirmandoStatus && (
+        <div className="fixed inset-0 z-50 bg-[#090b0f]/85 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-[#0e1218] max-w-md w-full p-6 border border-[#2d3748] space-y-4">
+            <h3 className="text-lg font-bold text-[#f1ede4] border-b border-[#1f2633] pb-3">
+              {usuarioConfirmandoStatus.ativo
+                ? 'Confirmar Desativação de Usuário'
+                : 'Confirmar Reativação de Usuário'}
+            </h3>
+
+            <p className="text-sm text-[#949ba6] leading-relaxed">
+              {usuarioConfirmandoStatus.ativo ? (
+                <>
+                  Tem certeza que deseja <strong className="text-[#f87171]">desativar</strong> a conta de{' '}
+                  <strong className="text-[#f1ede4]">{usuarioConfirmandoStatus.name}</strong> (
+                  {usuarioConfirmandoStatus.email})?
+                  <br />
+                  <span className="block mt-2 text-xs text-[#5e6673]">
+                    O usuário terá a sessão encerrada imediatamente e não poderá acessar o sistema até ser reativado.
+                  </span>
+                </>
+              ) : (
+                <>
+                  Tem certeza que deseja <strong className="text-[#34d399]">reativar</strong> o acesso de{' '}
+                  <strong className="text-[#f1ede4]">{usuarioConfirmandoStatus.name}</strong> (
+                  {usuarioConfirmandoStatus.email}) ao sistema?
+                </>
+              )}
+            </p>
+
+            <div className="flex justify-end gap-2.5 pt-2 border-t border-[#1f2633]">
+              <button
+                type="button"
+                disabled={atualizarConta.isPending}
+                onClick={() => setUsuarioConfirmandoStatus(null)}
+                className="px-4 py-2 border border-[#2d3748] text-xs text-[#949ba6] hover:text-[#f1ede4] cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={atualizarConta.isPending}
+                onClick={() =>
+                  atualizarConta.mutate({
+                    id: usuarioConfirmandoStatus.id,
+                    payload: { ativo: !usuarioConfirmandoStatus.ativo },
+                  })
+                }
+                className={`px-5 py-2 font-semibold text-xs cursor-pointer transition-colors disabled:opacity-50 ${
+                  usuarioConfirmandoStatus.ativo
+                    ? 'bg-[#f87171] hover:bg-[#ef4444] text-[#090b0f]'
+                    : 'bg-[#34d399] hover:bg-[#10b981] text-[#090b0f]'
+                }`}
+              >
+                {atualizarConta.isPending
+                  ? 'Processando...'
+                  : usuarioConfirmandoStatus.ativo
+                    ? 'Sim, Desativar'
+                    : 'Sim, Reativar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
