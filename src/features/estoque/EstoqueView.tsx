@@ -27,6 +27,7 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
   const [modalNovoItem, setModalNovoItem] = useState(false);
   const [itemEditando, setItemEditando] = useState<UnidadeEstoque | null>(null);
   const [novoNome, setNovoNome] = useState('');
+  const [novoNumeroSerie, setNovoNumeroSerie] = useState('');
   const [novaCatId, setNovaCatId] = useState('');
   const [novoMinimo, setNovoMinimo] = useState(5);
   const [erroNovoItem, setErroNovoItem] = useState('');
@@ -47,6 +48,7 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
   const abrirModalItem = (unidade: UnidadeEstoque | null) => {
     setItemEditando(unidade);
     setNovoNome(unidade ? unidade.item.nome : '');
+    setNovoNumeroSerie(unidade?.item.numero_serie ?? '');
     setNovaCatId(unidade ? String(unidade.item.categoria_id || unidade.item.categoria?.id || '') : '');
     setNovoMinimo(unidade ? unidade.item.quantidade_minima : 5);
     setErroNovoItem('');
@@ -158,19 +160,16 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
   const criarItem = useMutation({
     mutationFn: async (e: React.FormEvent) => {
       e.preventDefault();
+      const payload = {
+        nome: novoNome,
+        numero_serie: novoNumeroSerie || null,
+        categoria_id: Number(novaCatId),
+        quantidade_minima: novoMinimo,
+      };
       if (itemEditando) {
-        await api.put(`/catalogo/${itemEditando.item.id}`, {
-          nome: novoNome,
-          categoria_id: Number(novaCatId),
-          quantidade_minima: novoMinimo,
-        });
+        await api.put(`/catalogo/${itemEditando.item.id}`, payload);
       } else {
-        await api.post('/catalogo', {
-          nome: novoNome,
-          categoria_id: Number(novaCatId),
-          quantidade_minima: novoMinimo,
-          lead_time_dias: 7,
-        });
+        await api.post('/catalogo', { ...payload, lead_time_dias: 7 });
       }
     },
     onSuccess: () => {
@@ -178,6 +177,7 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
       qc.invalidateQueries({ queryKey: ['catalogo-simples'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
       setNovoNome('');
+      setNovoNumeroSerie('');
       setErroNovoItem('');
       setItemEditando(null);
       setModalNovoItem(false);
@@ -225,7 +225,7 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
           <input
             type="search"
             aria-label="Buscar item"
-            placeholder="Buscar item..."
+            placeholder="Buscar item ou nº de série (ex: 2136)..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full border border-[#2d3748] bg-[#090b0f] px-3.5 py-2 text-sm text-[#f1ede4] placeholder:text-[#5e6673] focus:outline-none focus:border-[#d4a359]"
@@ -287,7 +287,12 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
               estoque?.data.map((u) => (
                 <tr key={u.id} className="hover:bg-[#141922] transition-colors">
                   <td className="py-3.5 px-4 font-semibold text-[#f1ede4]">
-                    {u.item.nome}
+                    <div>{u.item.nome}</div>
+                    {u.item.numero_serie && (
+                      <span className="inline-block mt-0.5 text-[11px] font-mono text-[#d4a359]">
+                        Nº Série: {u.item.numero_serie}
+                      </span>
+                    )}
                   </td>
                   <td className="py-3.5 px-4 text-[#949ba6]">
                     {u.item.categoria?.nome}
@@ -521,6 +526,22 @@ export function EstoqueView({ podeGerir }: { podeGerir: boolean }) {
                 value={novoNome}
                 onChange={(e) => setNovoNome(e.target.value)}
                 className="w-full border border-[#2d3748] bg-[#090b0f] px-3 py-2 text-sm text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs text-[#949ba6] mb-1">
+                Número de Série (4 dígitos, opcional)
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={4}
+                pattern="\d{4}"
+                placeholder="Ex: 2136"
+                value={novoNumeroSerie}
+                onChange={(e) => setNovoNumeroSerie(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                className="w-full border border-[#2d3748] bg-[#090b0f] px-3 py-2 text-sm font-mono text-[#f1ede4] focus:outline-none focus:border-[#d4a359]"
               />
             </div>
 

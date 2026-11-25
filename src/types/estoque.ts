@@ -20,6 +20,7 @@ export interface Categoria {
 export interface ItemCatalogo {
   id: number;
   nome: string;
+  numero_serie?: string | null;
   descricao?: string | null;
   categoria_id: number;
   categoria?: { id: number; nome: string };
